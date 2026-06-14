@@ -1,0 +1,28 @@
+{
+  "project": "SermonCut",
+  "tasks_doc": "docs/planning/06-tasks.md",
+  "mode": "normal",
+  "remote": "https://github.com/remge21c/SermonCut.git",
+  "default_branch": "main",
+  "slack_webhook": null,
+  "gemini_key_present": true,
+  "gemini_sdk": "google-genai",
+  "test_strategy": "mock_gemini",
+  "completed": [
+    "P0-T0.1",
+    "P0-T0.2",
+    "P0-T0.3",
+    "P1-R0-T1",
+    "P1-S0-T1"
+  ],
+  "in_progress": [],
+  "failed": [],
+  "phases": {
+    "P0": "done",
+    "P1": "partial",
+    "P2": "pending",
+    "P3": "partial",
+    "P4": "pending"
+  },
+  "notes": "P0 완료. Gemini 키는 환경변수에 존재 → R3/R4 모킹 단위테스트로 구현하되 실제 E2E도 가능. SDK는 google-genai(최신)."
+}
