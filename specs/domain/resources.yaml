@@ -1,0 +1,92 @@
+version: "2.0"
+
+# SermonCut 도메인 리소스 (1차 = Quick Shorts)
+# 이 앱은 웹 CRUD가 아니라 로컬 파이프라인이므로,
+# 리소스는 기획서 §7 데이터 모델의 파이프라인 산출물(JSON)을 가리킨다.
+# 각 리소스는 output/ 폴더의 JSON 파일 1개로 영속화된다.
+
+resources:
+  # 7.1 Normalized Source — 입력 영상 + 메타데이터
+  source:
+    description: 입력된 영상(유튜브/로컬)과 메타데이터
+    persisted_as: output/source_info.json
+    fields:
+      id: string            # "src_001"
+      type: enum            # youtube | local
+      url: string?          # 유튜브일 때만
+      video_path: string    # 로컬 캐시 경로
+      title: string
+      duration_sec: number
+    operations: [create, read]
+
+  # 7.1 transcript — 자막/전사 결과
+  transcript:
+    description: 자막 확보(YouTube 자막 우선 → Whisper 폴백) 결과 세그먼트
+    persisted_as: output/transcript.json
+    fields:
+      source_id: string
+      caption_source: enum  # youtube | whisper | imported(srt/vtt)
+      segments: list        # [{ start:number, end:number, text:string }]
+    operations: [create, read]
+
+  # 7.2 Sermon Analysis Result — 설교규칙.md 출력 (HH:MM:SS → 초 변환 저장)
+  sermon_analysis:
+    description: 설교 시작/끝/축도 + 요약/키워드 분석 결과
+    persisted_as: output/sermon_analysis.json
+    fields:
+      part: string                 # "2부" | "중고등부" | "수요예배" | "미상"
+      sermon_start: number         # 초 단위 float
+      sermon_end: number
+      start_reason: string
+      end_reason: string
+      benediction_start: number?   # 못 찾으면 null
+      benediction_end: number?
+      summary: string
+      keywords: list               # [string]
+    operations: [create, read]
+
+  # 7.5 Shorts Candidate — 쇼츠규칙.md 출력 (후보 5개)
+  shorts_candidate:
+    description: AI가 제안한 쇼츠 후보 (5개) + 추천 선택 3개
+    persisted_as: output/shorts_candidates.json
+    fields:
+      id: string                   # "cand_001"
+      type: enum                   # 후킹형 | 예화형 | 핵심선언형
+      start: number                # 초 단위 (본문 기준)
+      end: number
+      duration_sec: number         # 15~40 (기본 15~30)
+      title: string
+      hook_line: string
+      highlight: string
+      hashtags: list               # [string]
+      reason: string
+      score: number                # 0~100
+    collection_fields:
+      summary: string
+      keywords: list
+      selected_candidate_ids: list # 추천 3개 (사용자가 최종 확정)
+    operations: [create, read, update]   # update = 사용자가 선택 토글
+
+  # 7.3 / 11 — 렌더 작업 및 최종 산출물
+  shorts_render:
+    description: 선택된 3개 쇼츠의 렌더 작업과 결과 MP4
+    persisted_as: output/selected_shorts.json
+    fields:
+      id: string                   # "short_001"
+      candidate_id: string         # 원본 후보 id
+      title: string
+      hook_line: string
+      highlight: string
+      hashtags: list
+      source_start: number
+      source_end: number
+      crop: enum                   # left | center | right (기본 center)
+      status: enum                 # pending | rendering | done | failed
+      progress: number             # 0~100
+      output_path: string          # "output/short_001.mp4"
+    render_config:                 # 고정 기본 템플릿 1종 (§8.4)
+      resolution: "1080x1920"
+      fps: 30
+      format: mp4
+      subtitle_style: "white_text_black_outline"
+    operations: [create, read, update]

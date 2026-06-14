@@ -1,0 +1,45 @@
+version: "2.0"
+
+# SermonCut 화면 목록 (1차 = Quick Shorts)
+# 입력 소스: docs/SermonCut_최종기획서.md §8 화면 구성
+# B 모드(본문영상 편집)는 1차 OUT(Won't) → 2차에서 명세 추가
+
+app:
+  name: SermonCut
+  platform: electron-desktop
+  mvp_scope: quick_shorts
+
+screens:
+  - id: home
+    name: 홈 / 모드 선택
+    route: /
+    file: home.yaml
+
+  - id: quick-input
+    name: Quick Shorts - 입력 및 분석
+    route: /quick/input
+    file: quick-input.yaml
+
+  - id: quick-candidates
+    name: Quick Shorts - 쇼츠 후보 선택
+    route: /quick/candidates
+    file: quick-candidates.yaml
+
+  - id: quick-render-settings
+    name: Quick Shorts - 렌더 설정
+    route: /quick/render
+    file: quick-render-settings.yaml
+
+  - id: quick-result
+    name: Quick Shorts - 렌더 진행 및 결과
+    route: /quick/result
+    file: quick-result.yaml
+
+# 2차 예정 (1차 명세 제외)
+deferred_screens:
+  - id: base-edit
+    name: 본문영상 편집 (B 모드)
+    reason: 1차 MVP OUT (기획서 §3.3 Won't)
+
+flow: |
+  home → quick-input → quick-candidates → quick-render-settings → quick-result

@@ -1,0 +1,36 @@
+version: "2.0"
+
+# 화면 간 재사용 공통 컴포넌트
+shared_components:
+  - id: candidate_card
+    type: card
+    used_in: [quick-candidates]
+    function: 쇼츠 후보/결과 표시 카드 (제목·구간·유형·점수·훅·강조문·해시태그)
+    fields_shown: [type, title, hook_line, highlight, hashtags, duration_sec, score]
+
+  - id: progress_bar
+    type: progress
+    used_in: [quick-input, quick-result]
+    function: 단계/렌더 진행률 표시 (0~100)
+
+  - id: status_badge
+    type: badge
+    used_in: [quick-result]
+    function: 작업 상태 표시
+    variants: [pending, rendering, done, failed]
+
+  - id: type_badge
+    type: badge
+    used_in: [quick-candidates]
+    function: 쇼츠 유형 표시
+    variants: [후킹형, 예화형, 핵심선언형]
+
+  - id: keyword_chips
+    type: chip_group
+    used_in: [quick-candidates]
+    function: 설교 키워드 칩 목록
+
+  - id: app_nav_steps
+    type: stepper
+    used_in: [quick-input, quick-candidates, quick-render-settings, quick-result]
+    function: "Quick Shorts 진행 단계 표시 (입력→후보→설정→결과)"

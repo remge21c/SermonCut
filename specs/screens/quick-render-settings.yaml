@@ -1,0 +1,64 @@
+version: "2.0"
+
+screen:
+  name: Quick Shorts - 렌더 설정
+  route: /quick/render
+  layout: form-single
+
+# 기획서 §8.2 (6~7) + §8.4: 렌더 설정 → 렌더 시작
+description: >
+  선택한 3개 쇼츠의 세로 렌더 옵션을 확인/조정하고 렌더를 시작한다.
+  1차는 고정 기본 템플릿 1종(9:16 중앙 크롭 + 흰글씨/검은외곽선 자막).
+
+data_requirements:
+  - resource: shorts_candidate
+    needs: [id, title, start, end, type]   # 선택된 3개 표시
+  - resource: shorts_render
+    needs: [id, candidate_id, crop, status, output_path]
+    writes: true                            # 렌더 작업 생성
+
+components:
+  - id: selected_preview_list
+    type: list
+    position: main
+    function: 선택된 3개 쇼츠 미리보기(제목/구간/유형)
+
+  - id: crop_position_select
+    type: segmented_control
+    position: main
+    function: "세로 크롭 위치 (Should 기능)"
+    options:
+      - { value: center, label: 가운데, default: true }
+      - { value: left, label: 왼쪽 }
+      - { value: right, label: 오른쪽 }
+
+  - id: subtitle_style_info
+    type: readonly_info
+    position: main
+    function: "자막 스타일: 기본 템플릿 (흰 글씨 + 검은 외곽선) — 1차 고정"
+
+  - id: output_spec_info
+    type: readonly_info
+    position: main
+    function: "출력: 1080x1920 / 30fps / mp4"
+
+  - id: render_button
+    type: button
+    position: bottom
+    function: 렌더 시작
+    events:
+      - on: click
+        action: create(shorts_render x3) + run_pipeline(render)
+      - on: started
+        action: navigate(/quick/result)
+
+tests:
+  - name: 기본 설정 표시
+    when: 렌더 설정 화면 진입
+    then: [선택 3개 표시, 크롭 가운데 기본, 출력 사양 1080x1920/30fps 표시]
+  - name: 크롭 위치 변경
+    when: 크롭 위치를 오른쪽으로 변경
+    then: [선택된 크롭값이 렌더 작업에 반영됨]
+  - name: 렌더 시작
+    when: 렌더 시작 클릭
+    then: [shorts_render 3건 생성(status=pending), 결과 화면으로 이동]

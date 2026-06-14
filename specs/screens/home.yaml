@@ -1,0 +1,43 @@
+version: "2.0"
+
+screen:
+  name: 홈 / 모드 선택
+  route: /
+  layout: centered-single
+
+# 기획서 §8.1 첫 화면
+description: 두 작업 모드 중 하나를 선택해 시작한다.
+
+data_requirements: []   # 정적 화면 (데이터 불필요)
+
+components:
+  - id: app_title
+    type: heading
+    position: top
+    function: 앱 이름/슬로건 표시 (SermonCut)
+
+  - id: mode_quick_shorts
+    type: card_button
+    position: main
+    function: "A. Quick Shorts 모드 진입 (유튜브/영상 → 쇼츠)"
+    events:
+      - on: click
+        action: navigate(/quick/input)
+
+  - id: mode_base_edit
+    type: card_button
+    position: main
+    function: "B. 본문영상 편집 모드 (2차 예정)"
+    state: disabled   # 1차 OUT
+    note: 1차에서는 비활성 + "준비 중" 안내
+
+tests:
+  - name: 초기 진입
+    when: 앱 실행
+    then: [두 모드 카드 표시, B 모드는 비활성 상태]
+  - name: Quick Shorts 진입
+    when: A. Quick Shorts 카드 클릭
+    then: [입력 화면(/quick/input)으로 이동]
+  - name: B 모드 비활성 확인
+    when: B. 본문영상 편집 카드 클릭
+    then: ["준비 중(2차 예정)" 안내 표시, 이동하지 않음]

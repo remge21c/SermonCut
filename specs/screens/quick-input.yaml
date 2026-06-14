@@ -1,0 +1,83 @@
+version: "2.0"
+
+screen:
+  name: Quick Shorts - 입력 및 분석
+  route: /quick/input
+  layout: form-single
+
+# 기획서 §8.2 (1~3): 영상 입력 → 자막 확보 방식 → 분석 실행
+description: >
+  유튜브 링크 또는 로컬 영상을 입력하고 자막 확보 방식을 고른 뒤 분석을 실행한다.
+  분석은 자막 확보 → 설교 구간 분석(설교규칙.md) → 본문 transcript 생성 →
+  쇼츠 후보 5개 생성(쇼츠규칙.md)까지 수행한다.
+
+data_requirements:
+  - resource: source
+    needs: [id, type, url, video_path, title, duration_sec]
+    writes: true        # 이 화면에서 생성
+  - resource: transcript
+    needs: [source_id, caption_source, segments]
+    writes: true
+  - resource: sermon_analysis
+    needs: [part, sermon_start, sermon_end, summary, keywords]
+    writes: true
+  - resource: shorts_candidate
+    needs: [id, type, start, end, duration_sec, score]
+    writes: true        # 분석 단계에서 후보 5개 생성
+
+components:
+  - id: input_mode_tabs
+    type: tabs
+    position: top
+    function: "입력 방식 전환 (유튜브 URL / 로컬 파일)"
+
+  - id: youtube_url_field
+    type: text_input
+    position: main
+    function: 유튜브 링크 입력
+    validation: youtube_url
+
+  - id: local_file_picker
+    type: file_picker
+    position: main
+    function: 로컬 MP4 파일 선택
+    accept: [.mp4]
+
+  - id: caption_method_select
+    type: radio_group
+    position: main
+    function: "자막 확보 방식 선택"
+    options:
+      - { value: auto, label: "자동 (YouTube 자막 우선 → 없으면 Whisper)", default: true }
+      - { value: whisper, label: "Whisper 전사 강제" }
+      - { value: import, label: "기존 SRT/VTT 불러오기" }
+
+  - id: analyze_button
+    type: button
+    position: bottom
+    function: 분석 실행
+    events:
+      - on: click
+        action: run_pipeline(analyze)   # 자막→구간분석→transcript→후보5개
+      - on: success
+        action: navigate(/quick/candidates)
+
+  - id: analyze_progress
+    type: progress_log
+    position: bottom
+    function: "단계별 진행 표시 (자막 확보 / 구간 분석 / 후보 생성)"
+    visible_when: analyzing
+
+tests:
+  - name: 유튜브 링크 분석
+    when: 유튜브 URL 입력 + 자동 자막 + 분석 실행
+    then: [진행 로그 표시, 후보 5개 생성 후 후보 화면으로 이동]
+  - name: 로컬 영상 + Whisper
+    when: 로컬 MP4 선택 + Whisper 강제 + 분석 실행
+    then: [Whisper 전사 단계 표시, 분석 완료 후 이동]
+  - name: 잘못된 URL 검증
+    when: 유튜브가 아닌 URL 입력
+    then: [URL 형식 오류 안내, 분석 버튼 비활성]
+  - name: 자막 없음 폴백
+    when: YouTube 자막이 없는 영상 + 자동 모드
+    then: [Whisper 폴백으로 자동 전환, 분석 계속 진행]

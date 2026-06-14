@@ -1,0 +1,32 @@
+version: "2.0"
+
+# 공통 타입 / 열거형 (도메인 리소스와 화면이 공유)
+enums:
+  source_type: [youtube, local]
+  caption_source: [youtube, whisper, import]
+  shorts_type: [후킹형, 예화형, 핵심선언형]
+  crop_position: [left, center, right]
+  render_status: [pending, rendering, done, failed]
+
+types:
+  TranscriptSegment:
+    start: number   # 초
+    end: number     # 초
+    text: string
+
+  TimeRange:
+    start: number   # 초 (내부 저장은 float, AI 출력은 HH:MM:SS)
+    end: number
+
+constants:
+  shorts:
+    candidate_count: 5
+    selected_count: 3
+    duration_min_sec: 15
+    duration_max_sec: 40        # 기본 15~30, 문장완결 시 최대 40
+    type_distribution: { 후킹형: 2, 예화형: 2, 핵심선언형: 1 }   # 권장
+  render:
+    resolution: "1080x1920"
+    fps: 30
+    format: mp4
+    subtitle_style: white_text_black_outline

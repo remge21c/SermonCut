@@ -1,0 +1,64 @@
+version: "2.0"
+
+screen:
+  name: Quick Shorts - 쇼츠 후보 선택
+  route: /quick/candidates
+  layout: list-detail
+
+# 기획서 §8.2 (4~5): 후보 5개 표시 → 3개 선택
+description: >
+  AI가 만든 쇼츠 후보 5개를 보여주고, 사용자가 정확히 3개를 선택한다.
+  AI 추천(selected_candidate_ids) 3개는 기본 체크된 상태로 표시된다.
+
+data_requirements:
+  - resource: sermon_analysis
+    needs: [summary, keywords]      # 상단 요약 표시용
+  - resource: shorts_candidate
+    needs: [id, type, start, end, duration_sec, title, hook_line, highlight, hashtags, reason, score]
+  - resource: shorts_candidate
+    needs: [selected_candidate_ids]
+    writes: true                    # 선택 토글 저장
+
+components:
+  - id: summary_panel
+    type: panel
+    position: top
+    function: 설교 요약 + 키워드 칩 표시
+    data_source: { resource: sermon_analysis }
+
+  - id: candidate_list
+    type: card_list
+    position: main
+    function: "후보 5개 카드 표시 (제목/구간/유형/점수/훅/강조문/해시태그/이유)"
+    data_source: { resource: shorts_candidate }
+    item_components: [select_checkbox, type_badge, score_badge, preview_button]
+
+  - id: selection_counter
+    type: indicator
+    position: top
+    function: "선택 개수 표시 (n/3)"
+
+  - id: confirm_button
+    type: button
+    position: bottom
+    function: 선택 확정
+    enabled_when: selected_count == 3
+    events:
+      - on: click
+        action: save(shorts_candidate.selected_candidate_ids)
+      - on: success
+        action: navigate(/quick/render)
+
+tests:
+  - name: 후보 5개 표시 + 추천 프리셋
+    when: 후보 화면 진입
+    then: [후보 5개 카드 표시, AI 추천 3개 기본 선택됨, 카운터 3/3]
+  - name: 선택 개수 제한
+    when: 4번째 후보 선택 시도
+    then: [선택 불가 또는 안내, 항상 최대 3개 유지]
+  - name: 3개 미만 확정 차단
+    when: 2개만 선택한 상태
+    then: [확정 버튼 비활성]
+  - name: 선택 확정 후 이동
+    when: 정확히 3개 선택 + 확정 클릭
+    then: [selected_candidate_ids 저장, 렌더 설정 화면으로 이동]

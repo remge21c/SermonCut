@@ -1,0 +1,9 @@
+# SermonCut Python Engine (sermoncut_core)
+google-generativeai>=0.7.0   # Gemini API (분석/후보)
+yt-dlp>=2024.8.6             # 유튜브 영상/자막
+faster-whisper>=1.0.0       # 로컬 음성 전사 (Whisper 폴백)
+python-dotenv>=1.0.0
+# FFmpeg는 시스템 바이너리 (pip 아님) — .env FFMPEG_PATH
+
+# dev
+pytest>=8.0.0

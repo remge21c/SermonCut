@@ -1,0 +1,25 @@
+# Node
+node_modules/
+dist/
+dist-electron/
+out/
+release/
+
+# Python
+engine/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Env / secrets
+.env
+.env.local
+
+# App output (generated media + intermediate JSON)
+output/
+cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
