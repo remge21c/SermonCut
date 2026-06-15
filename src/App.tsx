@@ -26,13 +26,15 @@ export default function App() {
         </h1>
         {showStepper && (
           <nav className="stepper">
-            {STEPS.map((s, i) => (
-              <span
+            {STEPS.map((s) => (
+              <button
                 key={s.path}
                 className={"step" + (pathname === s.path ? " step--active" : "")}
+                onClick={() => nav(s.path)}
+                title={`${s.label}(으)로 이동`}
               >
-                {i + 1}. {s.label}
-              </span>
+                {s.label}
+              </button>
             ))}
           </nav>
         )}

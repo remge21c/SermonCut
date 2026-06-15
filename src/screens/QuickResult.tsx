@@ -75,15 +75,23 @@ export default function QuickResult() {
       {s.status === "error" && <p className="error">⚠ {s.error}</p>}
 
       {s.status === "done" && (
-        <button
-          className="btn-primary"
-          onClick={() => {
-            s.reset();
-            nav("/");
-          }}
-        >
-          새 작업 시작
-        </button>
+        <div className="btn-row">
+          <button className="btn-ghost" onClick={() => nav("/quick/candidates")}>
+            ← 후보 다시 선택
+          </button>
+          <button className="btn-ghost" onClick={() => nav("/quick/render")}>
+            ← 렌더 설정
+          </button>
+          <button
+            className="btn-primary"
+            onClick={() => {
+              s.reset();
+              nav("/");
+            }}
+          >
+            새 작업 시작
+          </button>
+        </div>
       )}
     </section>
   );
