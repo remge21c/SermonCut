@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { usePipeline } from "../store/usePipeline";
+import { ElapsedTimer } from "../components/ElapsedTimer";
 
 // Quick Shorts - 입력 및 분석 — specs/screens/quick-input.yaml (P3-S2-T1)
 export default function QuickInput() {
@@ -80,9 +81,18 @@ export default function QuickInput() {
       </div>
 
       {s.status === "analyzing" && (
-        <p className="placeholder">분석을 진행하고 있습니다. 취소하려면 위 버튼을 누르세요.</p>
+        <p className="placeholder">
+          분석 진행 중{" "}
+          <ElapsedTimer startedAt={s.analyzeStartedAt} running finalMs={null} />
+          {" "}— 취소하려면 위 버튼을 누르세요.
+        </p>
       )}
-      {s.status === "cancelled" && <p className="placeholder">분석이 취소되었습니다.</p>}
+      {s.status === "cancelled" && (
+        <p className="placeholder">
+          분석이 취소되었습니다.{" "}
+          <ElapsedTimer startedAt={s.analyzeStartedAt} running={false} finalMs={s.analyzeElapsedMs} />
+        </p>
+      )}
       {s.status === "error" && <p className="error">⚠ {s.error}</p>}
     </section>
   );
