@@ -60,7 +60,8 @@ def build_ffmpeg_command(
     crop: left/center/right(세로 크롭) · fit(전체+블러배경) · fit_black(전체+검은여백)
     """
     duration = round(end - start, 3)
-    base = [ffmpeg, "-y", "-ss", f"{start:.3f}", "-i", input_video, "-t", f"{duration:.3f}"]
+    base = [ffmpeg, "-y", "-progress", "pipe:1", "-nostats",
+            "-ss", f"{start:.3f}", "-i", input_video, "-t", f"{duration:.3f}"]
     enc = [
         "-r", str(FPS),
         "-c:v", "libx264", "-preset", "medium", "-crf", "20",
@@ -110,6 +111,33 @@ def write_clip_srt(segments: list[dict], clip_start: float, name: str) -> str:
     return str(path)
 
 
+def _out_time_seconds(line: str):
+    v = line.split("=", 1)[1].strip()
+    if not v or v == "N/A":
+        return None
+    try:
+        h, m, s = v.split(":")
+        return int(h) * 3600 + int(m) * 60 + float(s)
+    except ValueError:
+        return None
+
+
+def _run_with_progress(cmd, duration, progress_cb) -> int:
+    """ffmpeg -progress 출력을 파싱해 진행률(%)을 progress_cb로 전달."""
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+    if proc.stdout:
+        for line in proc.stdout:
+            line = line.strip()
+            if line.startswith("out_time=") and duration > 0:
+                sec = _out_time_seconds(line)
+                if sec is not None and progress_cb:
+                    progress_cb(min(99.0, round(sec / duration * 100, 1)))
+            elif line.startswith("progress=") and line.endswith("end"):
+                break
+    proc.wait()
+    return proc.returncode
+
+
 def render_short(
     job: dict,
     input_video: str,
@@ -117,6 +145,7 @@ def render_short(
     runner=None,        # (argv)->returncode (주입용)
     ffmpeg: str = "ffmpeg",
     persist_name: str | None = None,
+    progress_cb=None,   # (percent: float)->None 실시간 진행률
 ) -> dict:
     """단일 쇼츠 렌더. job: shorts_render 스키마. 결과 status/progress 갱신."""
     ff = shutil.which(ffmpeg) or ffmpeg
@@ -128,8 +157,13 @@ def render_short(
         ffmpeg=ff,
     )
 
-    run = runner or (lambda argv: subprocess.run(argv).returncode)
-    code = run(cmd)
+    duration = float(job["source_end"]) - float(job["source_start"])
+    if runner:
+        code = runner(cmd)
+    elif progress_cb:
+        code = _run_with_progress(cmd, duration, progress_cb)
+    else:
+        code = subprocess.run(cmd).returncode
 
     job = dict(job)
     if code == 0:

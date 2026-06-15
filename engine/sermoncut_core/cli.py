@@ -78,8 +78,7 @@ def cmd_render(payload: dict) -> dict:
     results = []
     for i, cand in enumerate(selected, start=1):
         short_id = f"short_{i:03d}"
-        emit_progress(short_id, percent=int((i - 1) / len(selected) * 100),
-                      message=f"{short_id} 렌더 중")
+        emit_progress(short_id, percent=0, message=f"{short_id} 렌더 시작")
 
         clip_segs = [s for s in transcript["segments"]
                      if s["end"] > cand["start"] and s["start"] < cand["end"]]
@@ -94,7 +93,13 @@ def cmd_render(payload: dict) -> dict:
             "status": "pending", "progress": 0,
             "output_path": f"output/{short_id}.mp4",
         }
-        results.append(render_short(job, input_video))
+
+        def _cb(p, sid=short_id):
+            emit_progress(sid, percent=p, message=f"{sid} 렌더 중")
+
+        result = render_short(job, input_video, progress_cb=_cb)
+        emit_progress(short_id, percent=100, message=f"{short_id} 완료")
+        results.append(result)
 
     write_json(results_dir() / "selected_shorts.json", results)
     emit_progress("done", percent=100)
