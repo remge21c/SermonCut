@@ -36,6 +36,10 @@ def crop_filter(crop: str = "center") -> str:
     return f"crop=ih*9/16:ih:{_CROP_X[crop]}:0,scale={RES_W}:{RES_H}"
 
 
+def _sub_filter(subtitle_path: str) -> str:
+    return f"subtitles='{_escape_sub_path(subtitle_path)}':force_style='{_SUB_STYLE}'"
+
+
 def _escape_sub_path(path: str) -> str:
     # ffmpeg subtitles 필터는 Windows 경로의 ':' 와 '\' 이스케이프 필요
     return path.replace("\\", "/").replace(":", "\\:")
@@ -51,23 +55,39 @@ def build_ffmpeg_command(
     subtitle_path: str | None = None,
     ffmpeg: str = "ffmpeg",
 ) -> list[str]:
-    """쇼츠 1개 렌더용 ffmpeg argv 리스트 생성."""
-    duration = round(end - start, 3)
-    vf = crop_filter(crop)
-    if subtitle_path:
-        vf += f",subtitles='{_escape_sub_path(subtitle_path)}':force_style='{_SUB_STYLE}'"
+    """쇼츠 1개 렌더용 ffmpeg argv 리스트 생성.
 
-    return [
-        ffmpeg, "-y",
-        "-ss", f"{start:.3f}",
-        "-i", input_video,
-        "-t", f"{duration:.3f}",
-        "-vf", vf,
+    crop: left/center/right(세로 크롭) · fit(전체+블러배경) · fit_black(전체+검은여백)
+    """
+    duration = round(end - start, 3)
+    base = [ffmpeg, "-y", "-ss", f"{start:.3f}", "-i", input_video, "-t", f"{duration:.3f}"]
+    enc = [
         "-r", str(FPS),
         "-c:v", "libx264", "-preset", "medium", "-crf", "20",
         "-c:a", "aac", "-b:a", "128k",
-        output,
     ]
+
+    if crop == "fit":
+        # 가로 영상 전체를 세로 안에 넣고 위/아래는 확대·블러한 배경으로 채움
+        graph = (
+            f"[0:v]split=2[bg][fg];"
+            f"[bg]scale={RES_W}:{RES_H}:force_original_aspect_ratio=increase,"
+            f"crop={RES_W}:{RES_H},boxblur=20[bgb];"
+            f"[fg]scale={RES_W}:-2[fgs];"
+            f"[bgb][fgs]overlay=(W-w)/2:(H-h)/2"
+        )
+        graph += f"[v];[v]{_sub_filter(subtitle_path)}[vout]" if subtitle_path else "[vout]"
+        return base + ["-filter_complex", graph, "-map", "[vout]", "-map", "0:a?"] + enc + [output]
+
+    if crop == "fit_black":
+        vf = (f"scale={RES_W}:{RES_H}:force_original_aspect_ratio=decrease,"
+              f"pad={RES_W}:{RES_H}:(ow-iw)/2:(oh-ih)/2:black")
+    else:
+        vf = crop_filter(crop)
+    if subtitle_path:
+        vf += "," + _sub_filter(subtitle_path)
+
+    return base + ["-vf", vf] + enc + [output]
 
 
 def write_clip_srt(segments: list[dict], clip_start: float, name: str) -> str:

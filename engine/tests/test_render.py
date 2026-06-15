@@ -1,10 +1,17 @@
 import pytest
 
+from sermoncut_core import io_utils
 from sermoncut_core.render import (
     crop_filter,
     build_ffmpeg_command,
     render_short,
 )
+
+
+@pytest.fixture
+def project(tmp_path):
+    io_utils.set_project(tmp_path)
+    return tmp_path
 
 
 def test_crop_filter_variants():
@@ -35,7 +42,27 @@ def test_build_command_with_subtitles():
     assert "force_style=" in vf
 
 
-def test_render_short_success_updates_status():
+def test_build_command_fit_blur_uses_filter_complex():
+    cmd = build_ffmpeg_command("in.mp4", 0.0, 20.0, "o.mp4", crop="fit")
+    assert "-filter_complex" in cmd
+    fc = cmd[cmd.index("-filter_complex") + 1]
+    assert "split=2" in fc and "boxblur" in fc and "overlay=" in fc
+    assert "-map" in cmd and "[vout]" in cmd
+
+
+def test_build_command_fit_blur_with_subtitles():
+    cmd = build_ffmpeg_command("in.mp4", 0.0, 20.0, "o.mp4", crop="fit", subtitle_path="c.srt")
+    fc = cmd[cmd.index("-filter_complex") + 1]
+    assert "subtitles=" in fc and "[vout]" in fc
+
+
+def test_build_command_fit_black_pads():
+    cmd = build_ffmpeg_command("in.mp4", 0.0, 20.0, "o.mp4", crop="fit_black")
+    vf = cmd[cmd.index("-vf") + 1]
+    assert "pad=1080:1920" in vf and "decrease" in vf
+
+
+def test_render_short_success_updates_status(project):
     job = {
         "id": "short_001", "candidate_id": "cand_001",
         "source_start": 100.0, "source_end": 125.0,
@@ -47,7 +74,7 @@ def test_render_short_success_updates_status():
     assert out["progress"] == 100
 
 
-def test_render_short_failure():
+def test_render_short_failure(project):
     job = {
         "id": "short_002", "candidate_id": "cand_002",
         "source_start": 0.0, "source_end": 20.0,

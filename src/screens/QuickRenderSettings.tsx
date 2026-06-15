@@ -1,12 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { usePipeline } from "../store/usePipeline";
+import { usePipeline, type Crop } from "../store/usePipeline";
 import type { Candidate } from "../lib/selection";
 
 // Quick Shorts - 렌더 설정 — specs/screens/quick-render-settings.yaml (P3-S4-T1)
-const CROPS: Array<["left" | "center" | "right", string]> = [
-  ["left", "왼쪽"],
+const CROPS: Array<[Crop, string]> = [
   ["center", "가운데"],
+  ["left", "왼쪽"],
   ["right", "오른쪽"],
+  ["fit", "전체(블러)"],
+  ["fit_black", "전체(검정)"],
 ];
 
 export default function QuickRenderSettings() {
@@ -45,8 +47,8 @@ export default function QuickRenderSettings() {
       </ul>
 
       <div className="field-row">
-        <span>세로 크롭 위치</span>
-        <div className="segmented">
+        <span>화면 방식</span>
+        <div className="segmented segmented--wrap">
           {CROPS.map(([v, label]) => (
             <button
               key={v}
@@ -58,6 +60,10 @@ export default function QuickRenderSettings() {
           ))}
         </div>
       </div>
+      <p className="readonly-info">
+        · 왼쪽/가운데/오른쪽: 설교자가 한 곳에 있을 때 그 부분만 세로로 크롭
+        <br />· 전체(블러/검정): 설교자가 이동해도 안 잘림 — 가로 화면 전체를 세로 안에 담음
+      </p>
 
       <p className="readonly-info">자막 스타일: 기본 템플릿 (흰 글씨 + 검은 외곽선)</p>
       <p className="readonly-info">출력: 1080 × 1920 / 30fps / mp4</p>
