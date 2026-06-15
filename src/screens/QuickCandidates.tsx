@@ -9,6 +9,8 @@ import { MediaVideo } from "../components/MediaVideo";
 export default function QuickCandidates() {
   const nav = useNavigate();
   const s = usePipeline();
+  // Hook은 항상 같은 순서로 호출 (early return 위에 위치해야 함)
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const data = s.candidatesData;
 
   if (!data) {
@@ -24,7 +26,6 @@ export default function QuickCandidates() {
 
   const confirmable = canConfirm(s.selected);
   const videoPath = (s.source?.video_path as string) || "";
-  const [previewId, setPreviewId] = useState<string | null>(null);
 
   return (
     <section className="screen">
