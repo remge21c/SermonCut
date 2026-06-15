@@ -1,13 +1,78 @@
-// Quick Shorts - 입력 및 분석 — specs/screens/quick-input.yaml
-// TODO(P3-S2-T1): URL/로컬 입력, 자막 방식 선택, run_pipeline(analyze) 연동
+import { useNavigate } from "react-router-dom";
+import { usePipeline } from "../store/usePipeline";
+
+// Quick Shorts - 입력 및 분석 — specs/screens/quick-input.yaml (P3-S2-T1)
 export default function QuickInput() {
+  const nav = useNavigate();
+  const s = usePipeline();
+  const isYoutube = s.inputType === "youtube";
+  const canRun =
+    s.status !== "analyzing" && (isYoutube ? s.url.trim() : s.path.trim());
+
+  async function onAnalyze() {
+    await usePipeline.getState().analyze();
+    if (usePipeline.getState().status === "ready") nav("/quick/candidates");
+  }
+
   return (
     <section className="screen">
       <h2>1. 입력 및 분석</h2>
-      <p className="placeholder">
-        유튜브 링크 / 로컬 영상 입력 + 자막 방식(자동·Whisper·임포트) + 분석 실행.
-        (구현 예정: P3-S2-T1)
-      </p>
+
+      <div className="tabs">
+        <button
+          className={"tab" + (isYoutube ? " tab--active" : "")}
+          onClick={() => s.setInputType("youtube")}
+        >
+          유튜브 URL
+        </button>
+        <button
+          className={"tab" + (!isYoutube ? " tab--active" : "")}
+          onClick={() => s.setInputType("local")}
+        >
+          로컬 파일
+        </button>
+      </div>
+
+      {isYoutube ? (
+        <input
+          className="field"
+          placeholder="https://youtube.com/watch?v=..."
+          value={s.url}
+          onChange={(e) => s.setUrl(e.target.value)}
+        />
+      ) : (
+        <input
+          className="field"
+          placeholder="C:\\videos\\sermon.mp4"
+          value={s.path}
+          onChange={(e) => s.setPath(e.target.value)}
+        />
+      )}
+
+      <fieldset className="radio-group">
+        <legend>자막 확보 방식</legend>
+        {[
+          ["auto", "자동 (YouTube 자막 우선 → Whisper)"],
+          ["whisper", "Whisper 전사 강제"],
+          ["import", "기존 SRT/VTT 불러오기"],
+        ].map(([v, label]) => (
+          <label key={v}>
+            <input
+              type="radio"
+              name="caption"
+              checked={s.captionMethod === v}
+              onChange={() => s.setCaptionMethod(v as never)}
+            />
+            {label}
+          </label>
+        ))}
+      </fieldset>
+
+      <button className="btn-primary" disabled={!canRun} onClick={onAnalyze}>
+        {s.status === "analyzing" ? "분석 중..." : "분석 실행"}
+      </button>
+
+      {s.status === "error" && <p className="error">⚠ {s.error}</p>}
     </section>
   );
 }
