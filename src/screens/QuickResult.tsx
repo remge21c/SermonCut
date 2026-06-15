@@ -50,13 +50,15 @@ export default function QuickResult() {
         </div>
       )}
 
-      {s.status === "done" && (
+      {(s.status === "done" || s.status === "rendering") && s.results.length > 0 && (
         <ul className="result-list">
-          {s.results.map((r) => (
+          {s.results.map((r, i) => (
             <li key={r.id} className="result-card">
               <strong>{r.title || r.id}</strong>
               <span className={"badge badge--" + r.status}>{r.status}</span>
-              {r.status === "done" && <MediaVideo path={r.output_path} autoPlay={false} />}
+              {r.status === "done" && (
+                <MediaVideo path={r.output_path} autoPlay={false} version={s.renderTick} />
+              )}
               <code>{r.output_path}</code>
               {r.hashtags && <div className="chips">{r.hashtags.join(" ")}</div>}
               <div className="btn-row">
@@ -65,6 +67,13 @@ export default function QuickResult() {
                 </button>
                 <button className="btn-ghost" onClick={() => window.sermoncut.showInFolder(r.output_path)}>
                   폴더 열기
+                </button>
+                <button
+                  className="btn-ghost"
+                  disabled={s.status === "rendering"}
+                  onClick={() => s.renderOne(i)}
+                >
+                  🔄 다시 렌더
                 </button>
               </div>
             </li>

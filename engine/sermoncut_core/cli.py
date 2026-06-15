@@ -73,11 +73,27 @@ def cmd_render(payload: dict) -> dict:
     transcript = payload.get("transcript") or read_json(candidates_dir() / "transcript.json")
     selected = payload["selected"]           # 후보 dict 리스트(정확히 3개)
     crop = payload.get("crop", "center")
+    only = payload.get("only")               # 0-based 인덱스 목록(None=전체)
     input_video = source["video_path"]
 
+    # 기존 결과(개별 재렌더 시 미대상 쇼츠 유지)
+    existing = {}
+    try:
+        for r in read_json(results_dir() / "selected_shorts.json"):
+            existing[r["id"]] = r
+    except Exception:
+        pass
+
     results = []
-    for i, cand in enumerate(selected, start=1):
+    for idx, cand in enumerate(selected):
+        i = idx + 1
         short_id = f"short_{i:03d}"
+
+        # 재렌더 대상이 아니고 기존 결과가 있으면 그대로 유지
+        if only is not None and idx not in only and short_id in existing:
+            results.append(existing[short_id])
+            continue
+
         emit_progress(short_id, percent=0, message=f"{short_id} 렌더 시작")
 
         clip_segs = [s for s in transcript["segments"]
