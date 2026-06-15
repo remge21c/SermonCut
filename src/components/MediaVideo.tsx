@@ -6,13 +6,14 @@ interface Props {
   start?: number;        // 구간 시작(초)
   end?: number;          // 구간 끝(초)
   autoPlay?: boolean;
+  onPlay?: (el: HTMLVideoElement) => void;  // 재생 시작 알림(다른 영상 정지용)
 }
 
 /**
  * 로컬 영상/결과 파일을 media:// 로 재생.
  * start/end 가 있으면 JS로 해당 구간만 재생(메타데이터 로드 시 start로 이동, end에서 정지).
  */
-export function MediaVideo({ path, start, end, autoPlay = true }: Props) {
+export function MediaVideo({ path, start, end, autoPlay = true, onPlay }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const ref = useRef<HTMLVideoElement>(null);
 
@@ -60,6 +61,7 @@ export function MediaVideo({ path, start, end, autoPlay = true }: Props) {
         autoPlay={autoPlay}
         onLoadedMetadata={seekToStart}
         onTimeUpdate={onTimeUpdate}
+        onPlay={() => ref.current && onPlay?.(ref.current)}
       />
     </div>
   );
