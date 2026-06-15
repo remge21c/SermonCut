@@ -69,9 +69,16 @@ def download_youtube_video(url: str, dest_dir: str, progress_cb=None) -> str:
         "outtmpl": os.path.join(dest_dir, "%(id)s.%(ext)s"),
         "quiet": True,
         "noprogress": True,
-        "impersonate": "chrome",   # curl_cffi 위장
         "progress_hooks": [_hook],
     }
+    # curl_cffi 위장(impersonate): API는 ImpersonateTarget 객체를 요구.
+    # 백엔드가 없으면 위장 없이 진행(폴백).
+    try:
+        from yt_dlp.networking.impersonate import ImpersonateTarget
+        opts["impersonate"] = ImpersonateTarget("chrome")
+    except Exception:
+        pass
+
     with yt_dlp.YoutubeDL(opts) as ydl:
         ydl.download([url])
 
