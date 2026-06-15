@@ -41,14 +41,19 @@ def cmd_analyze(payload: dict) -> dict:
 
     emit_progress("transcript", percent=30, message="자막 확보")
 
+    from .timecode import hms
+
     def _whisper(path):
-        # 전사 진행률(0~100)을 전체 30~60% 구간으로 매핑
+        # 전사 위치(초)/전체 길이(초) → 영상 시간 기준 진행률 + "MM:SS / MM:SS" 표시
+        def cb(cur, tot):
+            pct = (cur / tot * 100) if tot else 0
+            emit_progress(
+                "transcript",
+                percent=round(30 + min(99.0, pct) * 0.3, 1),
+                message=f"음성 전사 {hms(cur)} / {hms(tot)} ({int(pct)}%)",
+            )
         return adapters.whisper_transcribe(
-            path,
-            model_size=payload.get("whisper_model"),
-            progress_cb=lambda p: emit_progress(
-                "transcript", percent=round(30 + p * 0.3, 1), message=f"음성 전사 중 {int(p)}%"
-            ),
+            path, model_size=payload.get("whisper_model"), progress_cb=cb
         )
 
     transcript = acquire_transcript(
