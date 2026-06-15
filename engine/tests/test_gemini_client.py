@@ -60,3 +60,48 @@ def test_call_gemini_exhausts_retries():
     client = _FakeClient(["bad", "bad", "bad"])
     with pytest.raises(ValueError):
         call_gemini("sys", "user", retries=2, client=client)
+
+
+# --- 일시적 서버 오류(503) 재시도 ---
+from google.genai.errors import APIError
+
+
+class _FakeServerError(APIError):
+    def __init__(self, code):
+        self.code = code
+        self.message = "transient"
+
+
+class _FlakyModels:
+    """처음 n번은 503, 그 다음 성공"""
+    def __init__(self, fail_times, text):
+        self.fail_times = fail_times
+        self.text = text
+        self.calls = 0
+
+    def generate_content(self, **_kwargs):
+        self.calls += 1
+        if self.calls <= self.fail_times:
+            raise _FakeServerError(503)
+        return _FakeResp(self.text)
+
+
+class _FlakyClient:
+    def __init__(self, fail_times, text):
+        self.models = _FlakyModels(fail_times, text)
+
+
+def test_call_gemini_retries_on_503(monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda _s: None)  # 백오프 즉시 통과
+    client = _FlakyClient(fail_times=2, text='{"ok": true}')
+    out = call_gemini("sys", "user", retries=3, backoff=0, client=client)
+    assert out == {"ok": True}
+    assert client.models.calls == 3
+
+
+def test_call_gemini_4xx_not_retried(monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda _s: None)
+    client = _FlakyClient(fail_times=99, text="x")
+    client.models.generate_content = lambda **_k: (_ for _ in ()).throw(_FakeServerError(400))
+    with pytest.raises(APIError):
+        call_gemini("sys", "user", retries=3, client=client)
