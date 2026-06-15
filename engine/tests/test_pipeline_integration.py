@@ -98,10 +98,14 @@ def test_analyze_pipeline_end_to_end(project, monkeypatch):
 
 
 def test_render_pipeline_end_to_end(project, monkeypatch):
-    # ffmpeg 실제 실행 대신 subprocess.run patch
-    class _OK:
-        returncode = 0
-    monkeypatch.setattr(render_mod.subprocess, "run", lambda *a, **k: _OK())
+    # ffmpeg 실제 실행 대신 Popen patch (진행률 경로)
+    class _FakePopen:
+        def __init__(self, *a, **k):
+            self.stdout = iter(("out_time=00:00:10.000\n", "progress=end\n"))
+            self.returncode = 0
+        def wait(self):
+            return 0
+    monkeypatch.setattr(render_mod.subprocess, "Popen", _FakePopen)
 
     source = {"id": "src_001", "type": "youtube", "url": "u",
               "video_path": "in.mp4", "title": "t", "duration_sec": 5400}
