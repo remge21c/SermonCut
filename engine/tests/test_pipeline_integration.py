@@ -67,7 +67,9 @@ def isolated_output(tmp_path, monkeypatch):
 def test_analyze_pipeline_end_to_end(isolated_output, monkeypatch):
     # 어댑터(자막) + Gemini patch
     monkeypatch.setattr(source_mod, "_youtube_info",
-                        lambda url: {"title": "2026 주일 2부", "duration": 5400, "_filename": "c.mp4"})
+                        lambda url: {"title": "2026 주일 2부", "duration": 5400, "id": "abc"})
+    monkeypatch.setattr("sermoncut_core.adapters.download_youtube_video",
+                        lambda url, dest, progress_cb=None: "cache/abc.mp4")
     monkeypatch.setattr("sermoncut_core.adapters.download_youtube_subs", lambda url, lang="ko": VTT)
     monkeypatch.setattr(analysis_mod, "call_gemini", _fake_gemini)
     monkeypatch.setattr(shorts_mod, "call_gemini", _fake_gemini)
@@ -78,6 +80,7 @@ def test_analyze_pipeline_end_to_end(isolated_output, monkeypatch):
     })
 
     # 반환 구조
+    assert result["source"]["video_path"] == "cache/abc.mp4"
     assert result["caption_source"] == "youtube"
     assert result["analysis"]["sermon_start"] == 1536.0
     assert len(result["candidates"]["candidates"]) == 5

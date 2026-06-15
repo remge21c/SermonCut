@@ -19,4 +19,9 @@ contextBridge.exposeInMainWorld("sermoncut", {
 
   // output/ JSON 산출물 읽기
   readArtifact: (name) => ipcRenderer.invoke("artifact:read", name),
+
+  // 미리보기/열기
+  mediaUrl: (p) => ipcRenderer.invoke("media:url", p),
+  openPath: (p) => ipcRenderer.invoke("shell:openPath", p),
+  showInFolder: (p) => ipcRenderer.invoke("shell:showInFolder", p),
 });

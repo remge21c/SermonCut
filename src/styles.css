@@ -66,6 +66,20 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 .elapsed { color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 600; }
 .elapsed-note { color: var(--muted); margin: 6px 0; font-size: 13px; }
 
+/* 미리보기 */
+.btn-ghost {
+  margin-top: 8px; padding: 6px 14px; background: transparent;
+  border: 1px solid #3a4150; border-radius: 8px; color: var(--text);
+  font-size: 13px; cursor: pointer;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.muted-note { color: var(--muted); font-size: 12px; }
+.preview-video, .video-loading {
+  display: block; width: 100%; max-width: 360px; margin: 10px 0;
+  border-radius: 10px; background: #000; aspect-ratio: 9 / 16;
+}
+.video-loading { display: flex; align-items: center; justify-content: center; color: var(--muted); }
+
 /* 후보 */
 .summary-panel { background: var(--panel); border-radius: 12px; padding: 16px; margin: 12px 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
