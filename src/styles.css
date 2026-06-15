@@ -21,7 +21,7 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 .step--active { color: var(--accent); font-weight: 600; }
 
 .app-main { flex: 1; padding: 32px; }
-.screen { max-width: 880px; margin: 0 auto; }
+.screen { width: 100%; }
 .screen--centered { text-align: center; }
 
 .mode-cards { display: flex; gap: 20px; justify-content: center; margin-top: 28px; }
