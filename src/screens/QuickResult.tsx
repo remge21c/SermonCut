@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { usePipeline } from "../store/usePipeline";
-import { ElapsedTimer, formatDuration } from "../components/ElapsedTimer";
+import { ElapsedTimer } from "../components/ElapsedTimer";
+import { formatDuration } from "../lib/time";
 import { MediaVideo } from "../components/MediaVideo";
 
 // Quick Shorts - 렌더 진행 및 결과 — specs/screens/quick-result.yaml (P3-S5-T1)
