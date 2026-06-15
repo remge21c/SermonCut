@@ -44,6 +44,7 @@ interface PipelineState {
   url: string;
   path: string;
   captionMethod: "auto" | "whisper" | "import";
+  whisperModel: "tiny" | "base" | "small";
 
   // 분석 결과
   status: Status;
@@ -75,6 +76,7 @@ interface PipelineState {
     results: RenderResult[] | null;
   }) => void;
   setInputType: (t: "youtube" | "local") => void;
+  setWhisperModel: (m: "tiny" | "base" | "small") => void;
   setUrl: (v: string) => void;
   setPath: (v: string) => void;
   setCaptionMethod: (m: "auto" | "whisper" | "import") => void;
@@ -96,6 +98,7 @@ export const usePipeline = create<PipelineState>((set, get) => ({
   url: "",
   path: "",
   captionMethod: "auto",
+  whisperModel: "base",
 
   status: "idle",
   error: null,
@@ -141,6 +144,8 @@ export const usePipeline = create<PipelineState>((set, get) => ({
 
   setInputType: (t) =>
     set({ inputType: t, captionMethod: t === "local" ? "whisper" : "auto" }),
+
+  setWhisperModel: (m) => set({ whisperModel: m }),
   setUrl: (v) => set({ url: v }),
   setPath: (v) => set({ path: v }),
   setCaptionMethod: (m) => set({ captionMethod: m }),
@@ -190,6 +195,7 @@ export const usePipeline = create<PipelineState>((set, get) => ({
         project: get().projectDir,
         input,
         caption_method: captionMethod,
+        whisper_model: get().whisperModel,
       });
 
       const selected = defaultSelection(

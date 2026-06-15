@@ -99,7 +99,31 @@ export default function QuickInput() {
       </fieldset>
 
       <div className="btn-row">
-        <button className="btn-primary" disabled={!canRun} onClick={onAnalyze}>
+        {s.captionMethod !== "import" && (
+        <fieldset className="radio-group">
+          <legend>전사 모델 (음성 전사 시 · 속도↔정확도)</legend>
+          <div className="segmented segmented--wrap">
+            {([
+              ["tiny", "빠름(tiny)"],
+              ["base", "기본(base)"],
+              ["small", "정확(small)"],
+            ] as const).map(([v, label]) => (
+              <button
+                key={v}
+                className={"seg" + (s.whisperModel === v ? " seg--active" : "")}
+                onClick={() => s.setWhisperModel(v)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="readonly-info">
+            긴 영상(로컬)은 CPU 전사가 수 분 걸립니다. 빠른 확인은 tiny, 품질은 small.
+          </p>
+        </fieldset>
+      )}
+
+      <button className="btn-primary" disabled={!canRun} onClick={onAnalyze}>
           {s.status === "analyzing" ? "분석 중..." : "분석 실행"}
         </button>
         {s.status === "analyzing" && (

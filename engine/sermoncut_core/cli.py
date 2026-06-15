@@ -45,6 +45,7 @@ def cmd_analyze(payload: dict) -> dict:
         # 전사 진행률(0~100)을 전체 30~60% 구간으로 매핑
         return adapters.whisper_transcribe(
             path,
+            model_size=payload.get("whisper_model"),
             progress_cb=lambda p: emit_progress(
                 "transcript", percent=round(30 + p * 0.3, 1), message=f"음성 전사 중 {int(p)}%"
             ),
