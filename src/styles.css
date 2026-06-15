@@ -82,6 +82,9 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 .seg-bar { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; flex-wrap: wrap; }
 .seg-time { color: var(--accent); font-size: 12px; font-variant-numeric: tabular-nums; margin: 4px 0; }
 .btn-ghost--sm { margin-top: 0; padding: 4px 10px; font-size: 12px; }
+.file-row { display: flex; gap: 8px; align-items: center; margin: 14px 0; }
+.file-row .field { margin: 0; flex: 1; }
+.file-row .btn-ghost { margin-top: 0; white-space: nowrap; }
 
 /* 후보 */
 .summary-panel { background: var(--panel); border-radius: 12px; padding: 16px; margin: 12px 0; }

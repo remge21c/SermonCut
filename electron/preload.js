@@ -20,6 +20,9 @@ contextBridge.exposeInMainWorld("sermoncut", {
   // output/ JSON 산출물 읽기
   readArtifact: (name) => ipcRenderer.invoke("artifact:read", name),
 
+  // 로컬 영상 파일 선택 다이얼로그
+  pickVideo: () => ipcRenderer.invoke("dialog:openVideo"),
+
   // 미리보기/열기
   mediaUrl: (p) => ipcRenderer.invoke("media:url", p),
   openPath: (p) => ipcRenderer.invoke("shell:openPath", p),
