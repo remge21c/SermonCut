@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePipeline } from "../store/usePipeline";
 import { canConfirm, type Candidate } from "../lib/selection";
-import { formatDuration } from "../components/ElapsedTimer";
+import { formatDuration, formatTimecode } from "../lib/time";
 import { MediaVideo } from "../components/MediaVideo";
 
 // Quick Shorts - 쇼츠 후보 선택 — specs/screens/quick-candidates.yaml (P3-S3-T1)
@@ -67,6 +67,10 @@ export default function QuickCandidates() {
                 <span className="badge badge--score">{String(c.score)}</span>
                 <strong>{String(c.title)}</strong>
               </label>
+              <p className="seg-time">
+                ⏱ {formatTimecode(Number(c.start))} ~ {formatTimecode(Number(c.end))}{" "}
+                ({Math.round(Number(c.end) - Number(c.start))}초)
+              </p>
               <p className="hook">{String(c.hook_line)}</p>
               <p className="highlight">“{String(c.highlight)}”</p>
               {videoPath ? (

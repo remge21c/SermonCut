@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-
-/** ms → "1분 23초" / "12초" 형식 */
-export function formatDuration(ms: number): string {
-  const totalSec = Math.max(0, Math.floor(ms / 1000));
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return m > 0 ? `${m}분 ${s}초` : `${s}초`;
-}
+import { formatDuration } from "../lib/time";
 
 interface Props {
   startedAt: number | null;
