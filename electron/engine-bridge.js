@@ -16,7 +16,11 @@ const CANCELLED = "__CANCELLED__";
 function runEngine(win, senderId, command, payload) {
   return new Promise((resolve, reject) => {
     const args = ["-m", "sermoncut_core.cli", command, "--json", JSON.stringify(payload || {})];
-    const proc = spawn(PYTHON, args, { cwd: path.join(ROOT, "engine") });
+    const proc = spawn(PYTHON, args, {
+      cwd: path.join(ROOT, "engine"),
+      // 한글 깨짐 방지: Python stdout/stderr 를 UTF-8 로 강제
+      env: { ...process.env, PYTHONIOENCODING: "utf-8", PYTHONUTF8: "1" },
+    });
     proc._cancelled = false;
     running.set(senderId, proc);
 
