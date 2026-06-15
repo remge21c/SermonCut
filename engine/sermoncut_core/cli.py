@@ -16,14 +16,80 @@ def cmd_ping(_payload: dict) -> dict:
     return {"ok": True, "version": __version__}
 
 
-def cmd_analyze(_payload: dict) -> dict:
-    # TODO(P2-R1~R4): source → transcript → sermon_analysis → shorts_candidate
-    fail("analyze 미구현 (P2-R1~R4 태스크에서 구현)")
+def cmd_analyze(payload: dict) -> dict:
+    """입력 → source → transcript → sermon_analysis → shorts_candidate."""
+    from . import adapters
+    from .source import build_source
+    from .captions import acquire_transcript
+    from .analysis import analyze_sermon
+    from .shorts import generate_candidates
+
+    spec = payload.get("input") or {}
+    method = payload.get("caption_method", "auto")
+
+    emit_progress("source", percent=10, message="입력 처리")
+    source = build_source(spec, persist=True)
+
+    emit_progress("transcript", percent=30, message="자막 확보")
+    transcript = acquire_transcript(
+        source,
+        method=method,
+        subs_downloader=adapters.download_youtube_subs,
+        whisper_fn=adapters.whisper_transcribe,
+        import_text=payload.get("import_text"),
+        persist=True,
+    )
+
+    emit_progress("analysis", percent=60, message="설교 구간 분석")
+    analysis = analyze_sermon(transcript, source.get("title", ""), persist=True)
+
+    emit_progress("candidates", percent=85, message="쇼츠 후보 생성")
+    candidates = generate_candidates(transcript, analysis, persist=True)
+
+    emit_progress("done", percent=100)
+    return {
+        "source": source,
+        "caption_source": transcript["caption_source"],
+        "analysis": analysis,
+        "candidates": candidates,
+    }
 
 
-def cmd_render(_payload: dict) -> dict:
-    # TODO(P2-R5): 선택 3개 → FFmpeg 9:16 크롭 + 자막 번인
-    fail("render 미구현 (P2-R5 태스크에서 구현)")
+def cmd_render(payload: dict) -> dict:
+    """선택된 후보 → 세로 9:16 렌더 (자막 번인)."""
+    from .render import render_short, write_clip_srt
+    from .io_utils import read_json, write_json
+
+    source = payload.get("source") or read_json("source_info.json")
+    transcript = payload.get("transcript") or read_json("transcript.json")
+    selected = payload["selected"]           # 후보 dict 리스트(정확히 3개)
+    crop = payload.get("crop", "center")
+    input_video = source["video_path"]
+
+    results = []
+    for i, cand in enumerate(selected, start=1):
+        short_id = f"short_{i:03d}"
+        emit_progress(short_id, percent=int((i - 1) / len(selected) * 100),
+                      message=f"{short_id} 렌더 중")
+
+        clip_segs = [s for s in transcript["segments"]
+                     if s["end"] > cand["start"] and s["start"] < cand["end"]]
+        srt = write_clip_srt(clip_segs, cand["start"], f"{short_id}.srt")
+
+        job = {
+            "id": short_id, "candidate_id": cand["id"],
+            "title": cand.get("title", ""), "hook_line": cand.get("hook_line", ""),
+            "highlight": cand.get("highlight", ""), "hashtags": cand.get("hashtags", []),
+            "source_start": cand["start"], "source_end": cand["end"],
+            "crop": crop, "subtitle_path": srt,
+            "status": "pending", "progress": 0,
+            "output_path": f"output/{short_id}.mp4",
+        }
+        results.append(render_short(job, input_video))
+
+    write_json("selected_shorts.json", results)
+    emit_progress("done", percent=100)
+    return {"shorts": results}
 
 
 COMMANDS = {"ping": cmd_ping, "analyze": cmd_analyze, "render": cmd_render}
