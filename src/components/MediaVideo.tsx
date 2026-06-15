@@ -27,6 +27,12 @@ export function MediaVideo({ path, start, end, autoPlay = true, onPlay }: Props)
 
   const hasSegment = start != null && end != null;
 
+  // start 가 바뀌면(미세조정) 미리보기를 새 시작점으로 이동
+  useEffect(() => {
+    const v = ref.current;
+    if (v && start != null && v.readyState >= 1) v.currentTime = start;
+  }, [start]);
+
   function seekToStart() {
     const v = ref.current;
     if (v && start != null) v.currentTime = start;

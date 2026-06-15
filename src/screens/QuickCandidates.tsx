@@ -90,6 +90,15 @@ export default function QuickCandidates() {
                 ⏱ {formatTimecode(Number(c.start))} ~ {formatTimecode(Number(c.end))}{" "}
                 ({Math.round(Number(c.end) - Number(c.start))}초)
               </p>
+              <div className="adjust">
+                <span className="adjust-label">시작</span>
+                <button className="adj-btn" onClick={() => s.adjustCandidate(c.id, "start", -1)}>−1s</button>
+                <button className="adj-btn" onClick={() => s.adjustCandidate(c.id, "start", +1)}>+1s</button>
+                <span className="adjust-label">끝</span>
+                <button className="adj-btn" onClick={() => s.adjustCandidate(c.id, "end", -1)}>−1s</button>
+                <button className="adj-btn" onClick={() => s.adjustCandidate(c.id, "end", +1)}>+1s</button>
+                <button className="adj-btn" onClick={() => s.adjustCandidate(c.id, "end", +3)}>+3s</button>
+              </div>
               <p className="hook">{String(c.hook_line)}</p>
               <p className="highlight">“{String(c.highlight)}”</p>
             </div>

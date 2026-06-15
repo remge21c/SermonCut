@@ -67,6 +67,7 @@ interface PipelineState {
   setPath: (v: string) => void;
   setCaptionMethod: (m: "auto" | "whisper" | "import") => void;
   toggleCandidate: (id: string) => void;
+  adjustCandidate: (id: string, field: "start" | "end", delta: number) => void;
   setCrop: (c: Crop) => void;
   analyze: () => Promise<void>;
   render: () => Promise<void>;
@@ -105,6 +106,27 @@ export const usePipeline = create<PipelineState>((set, get) => ({
   setCaptionMethod: (m) => set({ captionMethod: m }),
 
   toggleCandidate: (id) => set({ selected: toggleSelection(get().selected, id) }),
+
+  // 후보 시작/끝 시각 미세조정 (초). start<end, start>=0, 최소 1초 유지.
+  adjustCandidate: (id, field, delta) =>
+    set((state) => {
+      if (!state.candidatesData) return {};
+      const candidates = state.candidatesData.candidates.map((c) => {
+        if (c.id !== id) return c;
+        const start = Number(c.start);
+        const end = Number(c.end);
+        const next = { ...c } as Candidate & { start: number; end: number; duration_sec: number };
+        if (field === "start") {
+          next.start = Math.max(0, Math.min(start + delta, end - 1));
+        } else {
+          next.end = Math.max(start + 1, end + delta);
+        }
+        next.duration_sec = Math.round((next.end - next.start) * 10) / 10;
+        return next;
+      });
+      return { candidatesData: { ...state.candidatesData, candidates } };
+    }),
+
   setCrop: (c) => set({ crop: c }),
 
   analyze: async () => {
