@@ -59,6 +59,7 @@ body { margin: 0; background: var(--bg); color: var(--text); }
   padding: 14px 16px; cursor: pointer; transition: border-color .15s;
 }
 .project-item:hover { border-color: var(--accent); }
+.project-item-main { display: flex; align-items: center; gap: 10px; }
 
 /* 입력 */
 .tabs, .segmented { display: flex; gap: 8px; }

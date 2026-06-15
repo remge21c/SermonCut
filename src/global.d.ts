@@ -9,6 +9,7 @@ export interface SermonCutBridge {
   readArtifact: <T = unknown>(name: string) => Promise<T>;
   listProjects: () => Promise<ProjectInfo[]>;
   createProject: (name: string) => Promise<ProjectInfo>;
+  loadProjectState: (dir: string) => Promise<ProjectState>;
   pickVideo: () => Promise<string | null>;
   mediaUrl: (p: string) => Promise<string>;
   openPath: (p: string) => Promise<string>;
@@ -19,6 +20,20 @@ export interface ProjectInfo {
   name: string;
   dir: string;
   created: string | null;
+  hasCandidates?: boolean;
+  hasResults?: boolean;
+}
+
+export interface ProjectState {
+  source: Record<string, unknown> | null;
+  analysis: Record<string, unknown> | null;
+  candidates: {
+    summary: string;
+    keywords: string[];
+    candidates: Array<Record<string, unknown>>;
+    selected_candidate_ids: string[];
+  } | null;
+  results: Array<Record<string, unknown>> | null;
 }
 
 export interface EngineProgress {
