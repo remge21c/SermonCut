@@ -19,7 +19,12 @@
     "P2-R2-T1",
     "P2-R3-T1",
     "P2-R4-T1",
-    "P2-R5-T1"
+    "P2-R5-T1",
+    "P3-S1-T1",
+    "P3-S2-T1",
+    "P3-S3-T1",
+    "P3-S4-T1",
+    "P3-S5-T1"
   ],
   "in_progress": [],
   "failed": [],
@@ -27,13 +32,12 @@
     "P0": "done",
     "P1": "done",
     "P2": "done",
-    "P3": "partial",
+    "P3": "done",
     "P4": "pending"
   },
-  "tests": "36 passed (engine)",
+  "tests": "engine 36 passed + frontend 8 passed; tsc/vite build OK",
   "remaining": [
-    "P3-S1~S5 (React 화면 ↔ 엔진 IPC 연결, 현재 스텁)",
-    "P4-S*-V / P4-E2E (실제 유튜브→분석→렌더 검증, Gemini 키 사용)"
+    "P4-S*-V / P4-E2E (실제 Electron 실행 + 유튜브→분석→렌더 검증, Gemini 키 사용)"
   ],
-  "notes": "코어 엔진 경로 완료(P1-R0-T2 + P2-R1~R5), main 병합·푸시(238e133). 남은 작업: 프론트 화면 구현 + E2E."
+  "notes": "P0~P3 완료, main 병합·푸시(42cdde7). 남은 작업: P4 E2E(인터랙티브 Electron + 실제 영상 필요)."
 }
