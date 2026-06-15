@@ -10,8 +10,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 
 DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+
+# 일시적 서버 오류(재시도 대상): 429 rate limit, 5xx 과부하/오류
+RETRYABLE_STATUS = {429, 500, 503}
 
 _FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
 
@@ -51,27 +55,46 @@ def call_gemini(
     user_content: str,
     *,
     model: str = DEFAULT_MODEL,
-    retries: int = 2,
+    retries: int = 3,
+    backoff: float = 2.0,
     client=None,
 ) -> dict:
-    """Gemini 호출 후 JSON dict 반환. 파싱 실패 시 retries 만큼 재시도."""
+    """Gemini 호출 후 JSON dict 반환.
+
+    - 일시적 서버 오류(429/5xx)는 백오프 후 재시도
+    - JSON 파싱 실패도 재시도
+    - 4xx(키 만료 등)는 즉시 실패
+    """
     from google.genai import types
+    try:
+        from google.genai.errors import APIError
+    except Exception:  # pragma: no cover
+        APIError = ()
 
     client = client or _build_client()
     last_err: Exception | None = None
 
-    for _ in range(retries + 1):
-        resp = client.models.generate_content(
-            model=model,
-            contents=user_content,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                response_mime_type="application/json",
-            ),
-        )
+    for attempt in range(retries + 1):
+        try:
+            resp = client.models.generate_content(
+                model=model,
+                contents=user_content,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    response_mime_type="application/json",
+                ),
+            )
+        except APIError as e:  # type: ignore[misc]
+            code = getattr(e, "code", None)
+            if code in RETRYABLE_STATUS and attempt < retries:
+                last_err = e
+                time.sleep(backoff * (attempt + 1))
+                continue
+            raise
+
         try:
             return parse_json(resp.text)
         except (ValueError, json.JSONDecodeError) as e:
             last_err = e
 
-    raise ValueError(f"Gemini JSON 파싱 실패: {last_err}")
+    raise ValueError(f"Gemini 응답 처리 실패: {last_err}")
