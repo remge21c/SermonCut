@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld("sermoncut", {
   listProjects: () => ipcRenderer.invoke("projects:list"),
   createProject: (name) => ipcRenderer.invoke("projects:create", name),
   loadProjectState: (dir) => ipcRenderer.invoke("project:state", dir),
+  deleteProject: (dir) => ipcRenderer.invoke("projects:delete", dir),
 
   // 로컬 영상 파일 선택 다이얼로그
   pickVideo: () => ipcRenderer.invoke("dialog:openVideo"),
