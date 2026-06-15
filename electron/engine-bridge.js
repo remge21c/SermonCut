@@ -102,14 +102,34 @@ function registerEngineHandlers(ipcMain) {
           await fs.readFile(path.join(PROJECTS_ROOT, e.name, "config", "project.json"), "utf-8")
         );
       } catch {}
-      projects.push({
-        name: e.name,
-        dir: path.join(PROJECTS_ROOT, e.name),
-        created: meta.created || null,
-      });
+      const dir = path.join(PROJECTS_ROOT, e.name);
+      const hasCandidates = fsSync.existsSync(
+        path.join(dir, "candidates", "shorts_candidates.json")
+      );
+      const hasResults = fsSync.existsSync(
+        path.join(dir, "results", "selected_shorts.json")
+      );
+      projects.push({ name: e.name, dir, created: meta.created || null, hasCandidates, hasResults });
     }
     projects.sort((a, b) => String(b.created).localeCompare(String(a.created)));
     return projects;
+  });
+
+  // 프로젝트 저장 상태 로드 (재개용): candidates/results 산출물 읽기
+  ipcMain.handle("project:state", async (_e, dir) => {
+    const read = async (sub, name) => {
+      try {
+        return JSON.parse(await fs.readFile(path.join(dir, sub, name), "utf-8"));
+      } catch {
+        return null;
+      }
+    };
+    return {
+      source: await read("candidates", "source_info.json"),
+      analysis: await read("candidates", "sermon_analysis.json"),
+      candidates: await read("candidates", "shorts_candidates.json"),
+      results: await read("results", "selected_shorts.json"),
+    };
   });
 
   // 프로젝트 생성

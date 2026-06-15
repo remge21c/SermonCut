@@ -67,6 +67,12 @@ interface PipelineState {
 
   // actions
   setProject: (name: string, dir: string) => void;
+  loadProjectState: (data: {
+    source: Record<string, unknown> | null;
+    analysis: Record<string, unknown> | null;
+    candidatesData: CandidatesData | null;
+    results: RenderResult[] | null;
+  }) => void;
   setInputType: (t: "youtube" | "local") => void;
   setUrl: (v: string) => void;
   setPath: (v: string) => void;
@@ -108,6 +114,27 @@ export const usePipeline = create<PipelineState>((set, get) => ({
 
   // 탭 전환 시 자막 방식 기본값: 유튜브→자동, 로컬→Whisper(자막 없음)
   setProject: (name, dir) => set({ projectName: name, projectDir: dir }),
+
+  // 저장된 프로젝트 산출물로 상태 복원 (재개)
+  loadProjectState: ({ source, analysis, candidatesData, results }) =>
+    set(() => {
+      const patch: Partial<PipelineState> = {};
+      if (source) patch.source = source;
+      if (analysis) patch.analysis = analysis;
+      if (candidatesData) {
+        patch.candidatesData = candidatesData;
+        patch.selected = defaultSelection(
+          candidatesData.candidates,
+          candidatesData.selected_candidate_ids
+        );
+        patch.status = "ready";
+      }
+      if (results && results.length) {
+        patch.results = results;
+        patch.status = "done";
+      }
+      return patch;
+    }),
 
   setInputType: (t) =>
     set({ inputType: t, captionMethod: t === "local" ? "whisper" : "auto" }),

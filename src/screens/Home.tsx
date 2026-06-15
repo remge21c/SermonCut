@@ -18,10 +18,22 @@ export default function Home() {
     refresh();
   }, []);
 
-  function open(p: ProjectInfo) {
+  async function open(p: ProjectInfo) {
     setProject(p.name, p.dir);
     usePipeline.getState().reset();
-    nav("/quick/input");
+    const st = await window.sermoncut.loadProjectState(p.dir);
+    if (st.candidates) {
+      usePipeline.getState().loadProjectState({
+        source: st.source,
+        analysis: st.analysis,
+        candidatesData: st.candidates as never,
+        results: st.results as never,
+      });
+      // 결과까지 있으면 결과, 아니면 후보 화면으로 재개
+      nav(st.results && st.results.length ? "/quick/result" : "/quick/candidates");
+    } else {
+      nav("/quick/input");
+    }
   }
 
   async function create() {
@@ -64,7 +76,16 @@ export default function Home() {
         <ul className="project-list">
           {projects.map((p) => (
             <li key={p.dir} className="project-item" onClick={() => open(p)}>
-              <strong>{p.name}</strong>
+              <div className="project-item-main">
+                <strong>{p.name}</strong>
+                {p.hasResults ? (
+                  <span className="badge badge--done">렌더 완료</span>
+                ) : p.hasCandidates ? (
+                  <span className="badge badge--rendering">후보 생성됨</span>
+                ) : (
+                  <span className="badge">새 프로젝트</span>
+                )}
+              </div>
               <span className="muted-note">
                 {p.created ? new Date(p.created).toLocaleString() : ""}
               </span>
