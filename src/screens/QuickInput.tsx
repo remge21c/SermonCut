@@ -134,11 +134,16 @@ export default function QuickInput() {
       </div>
 
       {s.status === "analyzing" && (
-        <p className="placeholder">
-          분석 진행 중{" "}
-          <ElapsedTimer startedAt={s.analyzeStartedAt} running finalMs={null} />
-          {" "}— 취소하려면 위 버튼을 누르세요.
-        </p>
+        <div className="analyze-progress">
+          <p className="placeholder">
+            {s.analyzeMsg || "분석 진행 중"}{" "}
+            <ElapsedTimer startedAt={s.analyzeStartedAt} running finalMs={null} />
+          </p>
+          <div className="bar">
+            <div className="bar-fill" style={{ width: `${s.analyzePct}%` }} />
+          </div>
+          <p className="muted-note">취소하려면 위 “분석 취소”를 누르세요.</p>
+        </div>
       )}
       {s.status === "cancelled" && (
         <p className="placeholder">

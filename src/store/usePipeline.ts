@@ -61,6 +61,10 @@ interface PipelineState {
   progress: Record<string, number>;
   renderTick: number;   // 렌더 완료 시마다 증가(영상 캐시 갱신용)
 
+  // 분석 진행 표시
+  analyzePct: number;
+  analyzeMsg: string;
+
   // 경과 시간(ms)
   analyzeStartedAt: number | null;
   analyzeElapsedMs: number | null;
@@ -112,6 +116,9 @@ export const usePipeline = create<PipelineState>((set, get) => ({
   results: [],
   progress: {},
   renderTick: 0,
+
+  analyzePct: 0,
+  analyzeMsg: "",
 
   analyzeStartedAt: null,
   analyzeElapsedMs: null,
@@ -179,9 +186,14 @@ export const usePipeline = create<PipelineState>((set, get) => ({
     set({
       status: "analyzing",
       error: null,
+      analyzePct: 0,
+      analyzeMsg: "분석 준비 중",
       analyzeStartedAt: Date.now(),
       analyzeElapsedMs: null,
     });
+    const unsub = window.sermoncut.onEngineProgress((p) =>
+      set({ analyzePct: p.percent ?? 0, analyzeMsg: p.message ?? "" })
+    );
     try {
       const input =
         inputType === "youtube"
@@ -213,6 +225,7 @@ export const usePipeline = create<PipelineState>((set, get) => ({
       if (isCancel(e)) set({ status: "cancelled", error: null });
       else set({ status: "error", error: String(e) });
     } finally {
+      unsub?.();
       const startedAt = get().analyzeStartedAt;
       set({ analyzeElapsedMs: startedAt ? Date.now() - startedAt : null });
     }

@@ -119,7 +119,8 @@ def whisper_transcribe(
         for s in segments:
             out.append({"start": round(s.start, 3), "end": round(s.end, 3), "text": s.text.strip()})
             if progress_cb and total:
-                progress_cb(min(99.0, round(s.end / total * 100, 1)))
+                # 전사된 위치(초)와 전체 길이(초)를 전달 → 호출측에서 시간 표시
+                progress_cb(round(s.end, 1), round(total, 1))
         return out
 
     try:
