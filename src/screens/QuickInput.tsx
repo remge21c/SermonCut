@@ -63,11 +63,17 @@ export default function QuickInput() {
 
       <fieldset className="radio-group">
         <legend>자막 확보 방식</legend>
-        {[
-          ["auto", "자동 (YouTube 자막 우선 → Whisper)"],
-          ["whisper", "Whisper 전사 강제"],
-          ["import", "기존 SRT/VTT 불러오기"],
-        ].map(([v, label]) => (
+        {(isYoutube
+          ? ([
+              ["auto", "자동 (YouTube 자막 우선 → Whisper)"],
+              ["whisper", "Whisper 전사 강제"],
+              ["import", "기존 SRT/VTT 불러오기"],
+            ] as const)
+          : ([
+              ["whisper", "Whisper 전사 (로컬 영상은 자막이 없어 음성 전사)"],
+              ["import", "기존 SRT/VTT 불러오기"],
+            ] as const)
+        ).map(([v, label]) => (
           <label key={v}>
             <input
               type="radio"
