@@ -97,7 +97,9 @@ export const usePipeline = create<PipelineState>((set, get) => ({
   renderStartedAt: null,
   renderElapsedMs: null,
 
-  setInputType: (t) => set({ inputType: t }),
+  // 탭 전환 시 자막 방식 기본값: 유튜브→자동, 로컬→Whisper(자막 없음)
+  setInputType: (t) =>
+    set({ inputType: t, captionMethod: t === "local" ? "whisper" : "auto" }),
   setUrl: (v) => set({ url: v }),
   setPath: (v) => set({ path: v }),
   setCaptionMethod: (m) => set({ captionMethod: m }),
