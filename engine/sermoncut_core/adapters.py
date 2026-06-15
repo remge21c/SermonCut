@@ -89,11 +89,14 @@ def download_youtube_video(url: str, dest_dir: str, progress_cb=None) -> str:
     return out[0]
 
 
-def whisper_transcribe(video_path: str, model_size: str | None = None) -> list[dict]:
+def whisper_transcribe(
+    video_path: str, model_size: str | None = None, progress_cb=None
+) -> list[dict]:
     """faster-whisper 전사 → [{start,end,text}].
 
     기본 CPU(int8) — GPU(CUDA) 라이브러리가 없어도 항상 동작.
     WHISPER_DEVICE=cuda 로 GPU 사용 가능하며, 실패 시 CPU로 자동 폴백.
+    속도: VAD(무음 건너뜀) + beam_size=1 + 멀티코어. progress_cb(percent) 로 진행률 전달.
     """
     import os
     from faster_whisper import WhisperModel
@@ -101,14 +104,23 @@ def whisper_transcribe(video_path: str, model_size: str | None = None) -> list[d
     model_size = model_size or os.environ.get("WHISPER_MODEL", "base")
     device = os.environ.get("WHISPER_DEVICE", "cpu")
     compute = os.environ.get("WHISPER_COMPUTE", "int8")
+    threads = int(os.environ.get("WHISPER_THREADS", os.cpu_count() or 4))
 
     def _run(dev: str, ct: str) -> list[dict]:
-        model = WhisperModel(model_size, device=dev, compute_type=ct)
-        segments, _info = model.transcribe(video_path, language="ko")
-        return [
-            {"start": round(s.start, 3), "end": round(s.end, 3), "text": s.text.strip()}
-            for s in segments
-        ]
+        model = WhisperModel(model_size, device=dev, compute_type=ct, cpu_threads=threads)
+        segments, info = model.transcribe(
+            video_path,
+            language="ko",
+            beam_size=1,            # greedy → 빠름
+            vad_filter=True,        # 무음 구간 건너뜀 → 가속
+        )
+        total = getattr(info, "duration", 0) or 0
+        out = []
+        for s in segments:
+            out.append({"start": round(s.start, 3), "end": round(s.end, 3), "text": s.text.strip()})
+            if progress_cb and total:
+                progress_cb(min(99.0, round(s.end / total * 100, 1)))
+        return out
 
     try:
         return _run(device, compute)
