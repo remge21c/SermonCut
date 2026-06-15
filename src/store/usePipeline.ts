@@ -55,6 +55,12 @@ interface PipelineState {
   results: RenderResult[];
   progress: Record<string, number>;
 
+  // 경과 시간(ms)
+  analyzeStartedAt: number | null;
+  analyzeElapsedMs: number | null;
+  renderStartedAt: number | null;
+  renderElapsedMs: number | null;
+
   // actions
   setInputType: (t: "youtube" | "local") => void;
   setUrl: (v: string) => void;
@@ -86,6 +92,11 @@ export const usePipeline = create<PipelineState>((set, get) => ({
   results: [],
   progress: {},
 
+  analyzeStartedAt: null,
+  analyzeElapsedMs: null,
+  renderStartedAt: null,
+  renderElapsedMs: null,
+
   setInputType: (t) => set({ inputType: t }),
   setUrl: (v) => set({ url: v }),
   setPath: (v) => set({ path: v }),
@@ -96,7 +107,12 @@ export const usePipeline = create<PipelineState>((set, get) => ({
 
   analyze: async () => {
     const { inputType, url, path, captionMethod } = get();
-    set({ status: "analyzing", error: null });
+    set({
+      status: "analyzing",
+      error: null,
+      analyzeStartedAt: Date.now(),
+      analyzeElapsedMs: null,
+    });
     try {
       const input =
         inputType === "youtube"
@@ -122,6 +138,9 @@ export const usePipeline = create<PipelineState>((set, get) => ({
     } catch (e) {
       if (isCancel(e)) set({ status: "cancelled", error: null });
       else set({ status: "error", error: String(e) });
+    } finally {
+      const startedAt = get().analyzeStartedAt;
+      set({ analyzeElapsedMs: startedAt ? Date.now() - startedAt : null });
     }
   },
 
@@ -131,7 +150,12 @@ export const usePipeline = create<PipelineState>((set, get) => ({
     const chosen = candidatesData.candidates.filter((c) =>
       selected.includes(c.id)
     );
-    set({ status: "rendering", results: [] });
+    set({
+      status: "rendering",
+      results: [],
+      renderStartedAt: Date.now(),
+      renderElapsedMs: null,
+    });
 
     const unsub = window.sermoncut.onEngineProgress((p) => {
       set((s) => ({ progress: { ...s.progress, [p.step]: p.percent ?? 0 } }));
@@ -147,6 +171,8 @@ export const usePipeline = create<PipelineState>((set, get) => ({
       else set({ status: "error", error: String(e) });
     } finally {
       unsub?.();
+      const startedAt = get().renderStartedAt;
+      set({ renderElapsedMs: startedAt ? Date.now() - startedAt : null });
     }
   },
 
@@ -169,5 +195,9 @@ export const usePipeline = create<PipelineState>((set, get) => ({
       selected: [],
       results: [],
       progress: {},
+      analyzeStartedAt: null,
+      analyzeElapsedMs: null,
+      renderStartedAt: null,
+      renderElapsedMs: null,
     }),
 }));

@@ -63,6 +63,8 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 }
 .btn-cancel:hover { background: #2a1a1a; }
 .error { color: #ff6b6b; margin-top: 12px; }
+.elapsed { color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 600; }
+.elapsed-note { color: var(--muted); margin: 6px 0; font-size: 13px; }
 
 /* 후보 */
 .summary-panel { background: var(--panel); border-radius: 12px; padding: 16px; margin: 12px 0; }

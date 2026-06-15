@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { usePipeline } from "../store/usePipeline";
 import { canConfirm, type Candidate } from "../lib/selection";
+import { formatDuration } from "../components/ElapsedTimer";
 
 // Quick Shorts - 쇼츠 후보 선택 — specs/screens/quick-candidates.yaml (P3-S3-T1)
 export default function QuickCandidates() {
@@ -21,6 +22,10 @@ export default function QuickCandidates() {
   return (
     <section className="screen">
       <h2>2. 쇼츠 후보 선택</h2>
+
+      {s.analyzeElapsedMs != null && (
+        <p className="elapsed-note">⏱ 분석 소요 {formatDuration(s.analyzeElapsedMs)}</p>
+      )}
 
       <div className="summary-panel">
         <p>{data.summary}</p>

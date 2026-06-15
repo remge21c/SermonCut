@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { usePipeline } from "../store/usePipeline";
+import { ElapsedTimer, formatDuration } from "../components/ElapsedTimer";
 
 // Quick Shorts - 렌더 진행 및 결과 — specs/screens/quick-result.yaml (P3-S5-T1)
 export default function QuickResult() {
@@ -10,6 +11,16 @@ export default function QuickResult() {
   return (
     <section className="screen">
       <h2>4. 렌더 진행 및 결과</h2>
+
+      {rendering && (
+        <p className="elapsed-note">
+          렌더 진행 중{" "}
+          <ElapsedTimer startedAt={s.renderStartedAt} running finalMs={null} />
+        </p>
+      )}
+      {s.status === "done" && s.renderElapsedMs != null && (
+        <p className="elapsed-note">⏱ 렌더 소요 {formatDuration(s.renderElapsedMs)}</p>
+      )}
 
       {rendering && (
         <div className="progress-list">
