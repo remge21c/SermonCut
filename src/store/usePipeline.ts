@@ -58,6 +58,7 @@ interface PipelineState {
   crop: Crop;
   results: RenderResult[];
   progress: Record<string, number>;
+  renderTick: number;   // 렌더 완료 시마다 증가(영상 캐시 갱신용)
 
   // 경과 시간(ms)
   analyzeStartedAt: number | null;
@@ -82,6 +83,7 @@ interface PipelineState {
   setCrop: (c: Crop) => void;
   analyze: () => Promise<void>;
   render: () => Promise<void>;
+  renderOne: (index: number) => Promise<void>;
   cancel: () => Promise<void>;
   reset: () => void;
 }
@@ -106,6 +108,7 @@ export const usePipeline = create<PipelineState>((set, get) => ({
   crop: "center",
   results: [],
   progress: {},
+  renderTick: 0,
 
   analyzeStartedAt: null,
   analyzeElapsedMs: null,
@@ -230,7 +233,7 @@ export const usePipeline = create<PipelineState>((set, get) => ({
         "render",
         { project: get().projectDir, selected: chosen, crop, source }
       );
-      set({ status: "done", results: res.shorts });
+      set({ status: "done", results: res.shorts, renderTick: get().renderTick + 1 });
     } catch (e) {
       if (isCancel(e)) set({ status: "cancelled", error: null });
       else set({ status: "error", error: String(e) });
@@ -238,6 +241,30 @@ export const usePipeline = create<PipelineState>((set, get) => ({
       unsub?.();
       const startedAt = get().renderStartedAt;
       set({ renderElapsedMs: startedAt ? Date.now() - startedAt : null });
+    }
+  },
+
+  // 단일 쇼츠만 재렌더 (미세조정 후). 나머지는 엔진에서 기존 결과 유지.
+  renderOne: async (index) => {
+    const { candidatesData, selected, crop, source } = get();
+    if (!candidatesData) return;
+    const chosen = candidatesData.candidates.filter((c) => selected.includes(c.id));
+    set({ status: "rendering" });
+
+    const unsub = window.sermoncut.onEngineProgress((p) => {
+      set((s) => ({ progress: { ...s.progress, [p.step]: p.percent ?? 0 } }));
+    });
+    try {
+      const res = await window.sermoncut.runEngine<{ shorts: RenderResult[] }>(
+        "render",
+        { project: get().projectDir, selected: chosen, crop, source, only: [index] }
+      );
+      set({ status: "done", results: res.shorts, renderTick: get().renderTick + 1 });
+    } catch (e) {
+      if (isCancel(e)) set({ status: "cancelled", error: null });
+      else set({ status: "error", error: String(e) });
+    } finally {
+      unsub?.();
     }
   },
 

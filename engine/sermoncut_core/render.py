@@ -22,11 +22,12 @@ _CROP_X = {
     "right": "iw-ih*9/16",
 }
 
-# 자막 스타일: 흰 글씨 + 검은 외곽선, 하단 중앙
+# 자막 스타일: 흰 글씨 + 검은 외곽선, 하단(설교자 얼굴이 가려지지 않도록)
+# original_size=1080x1920 기준이라 좌표/폰트는 실제 해상도 단위.
 _SUB_STYLE = (
-    "FontName=Malgun Gothic,FontSize=18,"
+    "FontName=Malgun Gothic,FontSize=46,"
     "PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,"
-    "BorderStyle=1,Outline=2,Shadow=0,Alignment=2,MarginV=120"
+    "BorderStyle=1,Outline=3,Shadow=1,Alignment=2,MarginV=170"
 )
 
 
@@ -37,7 +38,11 @@ def crop_filter(crop: str = "center") -> str:
 
 
 def _sub_filter(subtitle_path: str) -> str:
-    return f"subtitles='{_escape_sub_path(subtitle_path)}':force_style='{_SUB_STYLE}'"
+    return (
+        f"subtitles='{_escape_sub_path(subtitle_path)}'"
+        f":original_size={RES_W}x{RES_H}"
+        f":force_style='{_SUB_STYLE}'"
+    )
 
 
 def _escape_sub_path(path: str) -> str:

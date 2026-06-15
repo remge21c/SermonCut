@@ -6,6 +6,7 @@ interface Props {
   start?: number;        // 구간 시작(초)
   end?: number;          // 구간 끝(초)
   autoPlay?: boolean;
+  version?: number;      // 캐시 무효화(재렌더 후 새 파일 로드)
   onPlay?: (el: HTMLVideoElement) => void;  // 재생 시작 알림(다른 영상 정지용)
 }
 
@@ -13,17 +14,19 @@ interface Props {
  * 로컬 영상/결과 파일을 media:// 로 재생.
  * start/end 가 있으면 JS로 해당 구간만 재생(메타데이터 로드 시 start로 이동, end에서 정지).
  */
-export function MediaVideo({ path, start, end, autoPlay = true, onPlay }: Props) {
+export function MediaVideo({ path, start, end, autoPlay = true, version, onPlay }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const ref = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     let alive = true;
-    window.sermoncut.mediaUrl(path).then((u) => alive && setUrl(u));
+    window.sermoncut.mediaUrl(path).then((u) => {
+      if (alive) setUrl(version ? `${u}?v=${version}` : u);
+    });
     return () => {
       alive = false;
     };
-  }, [path]);
+  }, [path, version]);
 
   const hasSegment = start != null && end != null;
 
