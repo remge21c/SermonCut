@@ -38,6 +38,25 @@ def test_youtube_source_metadata():
     assert src["url"] == "https://youtu.be/abc"
 
 
+def test_youtube_downloads_video_when_downloader_given():
+    fake_info = lambda _url: {"title": "설교", "duration": 3600}
+    src = build_source(
+        {"type": "youtube", "url": "https://youtu.be/abc"},
+        ydl_info=fake_info,
+        video_downloader=lambda _url: "cache/abc.mp4",
+    )
+    assert src["video_path"] == "cache/abc.mp4"
+
+
+def test_youtube_without_downloader_has_empty_path():
+    fake_info = lambda _url: {"title": "설교", "duration": 3600}
+    src = build_source(
+        {"type": "youtube", "url": "https://youtu.be/abc"},
+        ydl_info=fake_info,
+    )
+    assert src["video_path"] == ""
+
+
 def test_unknown_type():
     with pytest.raises(ValueError):
         build_source({"type": "vimeo", "url": "x"})

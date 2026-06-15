@@ -37,6 +37,51 @@ def download_youtube_subs(url: str, lang: str = "ko") -> str | None:
             return f.read()
 
 
+def download_youtube_video(url: str, dest_dir: str, progress_cb=None) -> str:
+    """YouTube 영상을 mp4(h264/aac)로 다운로드하고 경로 반환. 캐시 재사용.
+
+    - curl_cffi 위장(impersonate)으로 403 회피
+    - 같은 영상 id 파일이 이미 있으면 재다운로드 안 함
+    """
+    import os
+    import glob
+    import yt_dlp
+
+    # 캐시 확인 (id 기반)
+    with yt_dlp.YoutubeDL({"quiet": True, "skip_download": True}) as ydl:
+        info = ydl.extract_info(url, download=False)
+    vid = info.get("id", "video")
+    existing = glob.glob(os.path.join(dest_dir, f"{vid}.*"))
+    existing = [p for p in existing if not p.endswith((".part", ".vtt", ".srt"))]
+    if existing:
+        return existing[0]
+
+    def _hook(d):
+        if progress_cb and d.get("status") == "downloading":
+            total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+            done = d.get("downloaded_bytes") or 0
+            if total:
+                progress_cb(round(done / total * 100, 1))
+
+    opts = {
+        "format": "bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+        "merge_output_format": "mp4",
+        "outtmpl": os.path.join(dest_dir, "%(id)s.%(ext)s"),
+        "quiet": True,
+        "noprogress": True,
+        "impersonate": "chrome",   # curl_cffi 위장
+        "progress_hooks": [_hook],
+    }
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        ydl.download([url])
+
+    out = glob.glob(os.path.join(dest_dir, f"{vid}.*"))
+    out = [p for p in out if p.endswith(".mp4")] or out
+    if not out:
+        raise RuntimeError("영상 다운로드 실패")
+    return out[0]
+
+
 def whisper_transcribe(video_path: str, model_size: str | None = None) -> list[dict]:
     """faster-whisper 전사 → [{start,end,text}]."""
     from faster_whisper import WhisperModel

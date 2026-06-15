@@ -6,7 +6,13 @@ from pathlib import Path
 # 프로젝트 루트 = engine/ 의 상위
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_DIR = ROOT / "output"
+CACHE_DIR = ROOT / "cache"
 DOCS_DIR = ROOT / "docs"
+
+
+def cache_dir() -> Path:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    return CACHE_DIR
 
 
 def output_path(name: str) -> Path:

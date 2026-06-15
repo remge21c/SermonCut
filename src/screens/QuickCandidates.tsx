@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePipeline } from "../store/usePipeline";
 import { canConfirm, type Candidate } from "../lib/selection";
 import { formatDuration } from "../components/ElapsedTimer";
+import { MediaVideo } from "../components/MediaVideo";
 
 // Quick Shorts - 쇼츠 후보 선택 — specs/screens/quick-candidates.yaml (P3-S3-T1)
 export default function QuickCandidates() {
@@ -21,6 +23,8 @@ export default function QuickCandidates() {
   }
 
   const confirmable = canConfirm(s.selected);
+  const videoPath = (s.source?.video_path as string) || "";
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   return (
     <section className="screen">
@@ -65,6 +69,23 @@ export default function QuickCandidates() {
               </label>
               <p className="hook">{String(c.hook_line)}</p>
               <p className="highlight">“{String(c.highlight)}”</p>
+              {videoPath ? (
+                <button
+                  className="btn-ghost"
+                  onClick={() => setPreviewId(previewId === c.id ? null : c.id)}
+                >
+                  {previewId === c.id ? "미리보기 닫기" : "▶ 구간 미리보기"}
+                </button>
+              ) : (
+                <span className="muted-note">미리보기 불가(영상 없음)</span>
+              )}
+              {previewId === c.id && videoPath && (
+                <MediaVideo
+                  path={videoPath}
+                  start={Number(c.start)}
+                  end={Number(c.end)}
+                />
+              )}
             </li>
           );
         })}

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { usePipeline } from "../store/usePipeline";
 import { ElapsedTimer, formatDuration } from "../components/ElapsedTimer";
+import { MediaVideo } from "../components/MediaVideo";
 
 // Quick Shorts - 렌더 진행 및 결과 — specs/screens/quick-result.yaml (P3-S5-T1)
 export default function QuickResult() {
@@ -54,8 +55,17 @@ export default function QuickResult() {
             <li key={r.id} className="result-card">
               <strong>{r.title || r.id}</strong>
               <span className={"badge badge--" + r.status}>{r.status}</span>
+              {r.status === "done" && <MediaVideo path={r.output_path} autoPlay={false} />}
               <code>{r.output_path}</code>
               {r.hashtags && <div className="chips">{r.hashtags.join(" ")}</div>}
+              <div className="btn-row">
+                <button className="btn-ghost" onClick={() => window.sermoncut.openPath(r.output_path)}>
+                  파일 열기
+                </button>
+                <button className="btn-ghost" onClick={() => window.sermoncut.showInFolder(r.output_path)}>
+                  폴더 열기
+                </button>
+              </div>
             </li>
           ))}
         </ul>

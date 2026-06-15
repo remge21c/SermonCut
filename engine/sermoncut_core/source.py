@@ -41,6 +41,7 @@ def build_source(
     source_id: str = "src_001",
     ydl_info=None,
     probe_duration=None,
+    video_downloader=None,   # (url)->local_path (유튜브 영상 다운로드, 주입 가능)
     persist: bool = False,
 ) -> dict:
     """입력 spec → source dict (resources.source 스키마)."""
@@ -50,11 +51,14 @@ def build_source(
         url = spec["url"]
         info_fn = ydl_info or _youtube_info   # 주입 가능한 (url)->dict
         info = info_fn(url)
+        video_path = ""
+        if video_downloader is not None:
+            video_path = video_downloader(url)
         source = {
             "id": source_id,
             "type": "youtube",
             "url": url,
-            "video_path": info.get("filepath") or info.get("_filename") or "",
+            "video_path": video_path,
             "title": info.get("title", ""),
             "duration_sec": float(info.get("duration") or 0),
         }

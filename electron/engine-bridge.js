@@ -1,10 +1,15 @@
 const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs/promises");
+const fsSync = require("fs");
 
 const ROOT = path.join(__dirname, "..");
 const OUTPUT_DIR = path.join(ROOT, "output");
-const PYTHON = process.env.PYTHON_BIN || "python";
+
+// 의존성을 우리가 관리하는 engine/.venv 파이썬을 우선 사용 (없으면 시스템 python)
+const VENV_PY = path.join(ROOT, "engine", ".venv", "Scripts", "python.exe");
+const PYTHON =
+  process.env.PYTHON_BIN || (fsSync.existsSync(VENV_PY) ? VENV_PY : "python");
 
 // 실행 중인 엔진 프로세스를 sender(webContents.id) 기준으로 추적 → 취소 지원
 const running = new Map();
@@ -74,8 +79,12 @@ function cancelEngine(senderId) {
   return true;
 }
 
+function resolveAbs(p) {
+  return path.isAbsolute(p) ? p : path.join(ROOT, p);
+}
+
 function registerEngineHandlers(ipcMain) {
-  const { BrowserWindow } = require("electron");
+  const { BrowserWindow, shell } = require("electron");
 
   ipcMain.handle("engine:run", async (e, { command, payload }) => {
     const win = BrowserWindow.fromWebContents(e.sender);
@@ -88,6 +97,15 @@ function registerEngineHandlers(ipcMain) {
     const file = path.join(OUTPUT_DIR, name);
     const raw = await fs.readFile(file, "utf-8");
     return JSON.parse(raw);
+  });
+
+  // 미리보기/열기 지원
+  ipcMain.handle("media:url", (_e, p) =>
+    `media://m/${encodeURIComponent(resolveAbs(p))}`);
+  ipcMain.handle("shell:openPath", (_e, p) => shell.openPath(resolveAbs(p)));
+  ipcMain.handle("shell:showInFolder", (_e, p) => {
+    shell.showItemInFolder(resolveAbs(p));
+    return true;
   });
 }
 

@@ -19,6 +19,7 @@ def cmd_ping(_payload: dict) -> dict:
 def cmd_analyze(payload: dict) -> dict:
     """입력 → source → transcript → sermon_analysis → shorts_candidate."""
     from . import adapters
+    from .io_utils import cache_dir
     from .source import build_source
     from .captions import acquire_transcript
     from .analysis import analyze_sermon
@@ -27,8 +28,16 @@ def cmd_analyze(payload: dict) -> dict:
     spec = payload.get("input") or {}
     method = payload.get("caption_method", "auto")
 
-    emit_progress("source", percent=10, message="입력 처리")
-    source = build_source(spec, persist=True)
+    emit_progress("source", percent=5, message="영상 확보")
+
+    def _dl(url):
+        emit_progress("download", percent=5, message="유튜브 영상 다운로드 중")
+        return adapters.download_youtube_video(
+            url, str(cache_dir()),
+            progress_cb=lambda p: emit_progress("download", percent=p, message="영상 다운로드"),
+        )
+
+    source = build_source(spec, video_downloader=_dl, persist=True)
 
     emit_progress("transcript", percent=30, message="자막 확보")
     transcript = acquire_transcript(
