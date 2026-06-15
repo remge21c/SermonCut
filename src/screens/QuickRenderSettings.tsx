@@ -16,6 +16,17 @@ export default function QuickRenderSettings() {
   const chosen =
     data?.candidates.filter((c: Candidate) => s.selected.includes(c.id)) ?? [];
 
+  if (!data) {
+    return (
+      <section className="screen">
+        <p className="placeholder">먼저 입력 화면에서 분석을 실행하세요.</p>
+        <button className="btn-primary" onClick={() => nav("/quick/input")}>
+          ← 입력 화면으로
+        </button>
+      </section>
+    );
+  }
+
   async function onRender() {
     nav("/quick/result");
     await usePipeline.getState().render();

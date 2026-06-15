@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 const STEPS = [
   { path: "/quick/input", label: "입력" },
@@ -10,12 +10,20 @@ const STEPS = [
 // 공통 레이아웃 + Quick Shorts 진행 stepper (P1-S0)
 export default function App() {
   const { pathname } = useLocation();
+  const nav = useNavigate();
   const showStepper = pathname.startsWith("/quick");
 
   return (
     <div className="app">
       <header className="app-header">
-        <h1 className="app-logo">SermonCut</h1>
+        <h1
+          className="app-logo"
+          onClick={() => nav("/")}
+          title="홈으로"
+          style={{ cursor: "pointer" }}
+        >
+          SermonCut
+        </h1>
         {showStepper && (
           <nav className="stepper">
             {STEPS.map((s, i) => (
