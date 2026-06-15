@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePipeline } from "../store/usePipeline";
 import { canConfirm, type Candidate } from "../lib/selection";
@@ -10,8 +10,15 @@ export default function QuickCandidates() {
   const nav = useNavigate();
   const s = usePipeline();
   // Hook은 항상 같은 순서로 호출 (early return 위에 위치해야 함)
-  const [previewId, setPreviewId] = useState<string | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const data = s.candidatesData;
+
+  // 한 영상 재생 시 같은 행의 다른 영상은 정지
+  function handlePlay(el: HTMLVideoElement) {
+    rowRef.current?.querySelectorAll("video").forEach((v) => {
+      if (v !== el) v.pause();
+    });
+  }
 
   if (!data) {
     return (
@@ -46,18 +53,29 @@ export default function QuickCandidates() {
         </div>
       </div>
 
-      <div className="counter">선택 {s.selected.length} / 3</div>
+      <div className="counter">선택 {s.selected.length} / 3 · 카드를 가로로 넘기며 미리보기하세요</div>
 
-      <ul className="candidate-list">
+      <div className="candidate-row" ref={rowRef}>
         {data.candidates.map((c: Candidate) => {
           const checked = s.selected.includes(c.id);
           const full = s.selected.length >= 3 && !checked;
           return (
-            <li
+            <div
               key={c.id}
-              className={"candidate-card" + (checked ? " candidate-card--on" : "")}
+              className={"candidate-card-h" + (checked ? " candidate-card--on" : "")}
             >
-              <label>
+              {videoPath ? (
+                <MediaVideo
+                  path={videoPath}
+                  start={Number(c.start)}
+                  end={Number(c.end)}
+                  autoPlay={false}
+                  onPlay={handlePlay}
+                />
+              ) : (
+                <div className="video-loading">미리보기 불가(영상 없음)</div>
+              )}
+              <label className="card-head">
                 <input
                   type="checkbox"
                   checked={checked}
@@ -66,35 +84,18 @@ export default function QuickCandidates() {
                 />
                 <span className="badge">{String(c.type)}</span>
                 <span className="badge badge--score">{String(c.score)}</span>
-                <strong>{String(c.title)}</strong>
               </label>
+              <strong className="card-title">{String(c.title)}</strong>
               <p className="seg-time">
                 ⏱ {formatTimecode(Number(c.start))} ~ {formatTimecode(Number(c.end))}{" "}
                 ({Math.round(Number(c.end) - Number(c.start))}초)
               </p>
               <p className="hook">{String(c.hook_line)}</p>
               <p className="highlight">“{String(c.highlight)}”</p>
-              {videoPath ? (
-                <button
-                  className="btn-ghost"
-                  onClick={() => setPreviewId(previewId === c.id ? null : c.id)}
-                >
-                  {previewId === c.id ? "미리보기 닫기" : "▶ 구간 미리보기"}
-                </button>
-              ) : (
-                <span className="muted-note">미리보기 불가(영상 없음)</span>
-              )}
-              {previewId === c.id && videoPath && (
-                <MediaVideo
-                  path={videoPath}
-                  start={Number(c.start)}
-                  end={Number(c.end)}
-                />
-              )}
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
 
       <button
         className="btn-primary"
