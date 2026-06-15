@@ -13,7 +13,7 @@ type Status =
   | "done"
   | "cancelled"
   | "error";
-type Crop = "left" | "center" | "right";
+export type Crop = "left" | "center" | "right" | "fit" | "fit_black";
 
 const CANCELLED = "__CANCELLED__";
 const isCancel = (e: unknown) => String(e).includes(CANCELLED);

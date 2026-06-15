@@ -62,6 +62,7 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 
 /* 입력 */
 .tabs, .segmented { display: flex; gap: 8px; }
+.segmented--wrap { flex-wrap: wrap; }
 .tab, .seg {
   padding: 8px 16px; background: var(--panel); border: 1px solid #2c313b;
   border-radius: 8px; color: var(--text); cursor: pointer;
