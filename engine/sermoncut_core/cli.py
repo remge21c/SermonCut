@@ -95,7 +95,19 @@ def cmd_render(payload: dict) -> dict:
 COMMANDS = {"ping": cmd_ping, "analyze": cmd_analyze, "render": cmd_render}
 
 
+def _load_env() -> None:
+    """프로젝트 루트 .env 를 로드. .env 값이 시스템 환경변수보다 우선(override)."""
+    try:
+        from dotenv import load_dotenv
+        from pathlib import Path
+        env_path = Path(__file__).resolve().parents[2] / ".env"
+        load_dotenv(env_path, override=True)
+    except Exception:
+        pass  # dotenv 없거나 .env 없으면 시스템 환경변수 사용
+
+
 def main() -> None:
+    _load_env()
     parser = argparse.ArgumentParser(prog="sermoncut-core")
     parser.add_argument("command", choices=COMMANDS.keys())
     parser.add_argument("--json", default="{}", help="명령 페이로드(JSON 문자열)")
