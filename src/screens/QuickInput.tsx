@@ -68,10 +68,21 @@ export default function QuickInput() {
         ))}
       </fieldset>
 
-      <button className="btn-primary" disabled={!canRun} onClick={onAnalyze}>
-        {s.status === "analyzing" ? "분석 중..." : "분석 실행"}
-      </button>
+      <div className="btn-row">
+        <button className="btn-primary" disabled={!canRun} onClick={onAnalyze}>
+          {s.status === "analyzing" ? "분석 중..." : "분석 실행"}
+        </button>
+        {s.status === "analyzing" && (
+          <button className="btn-cancel" onClick={() => s.cancel()}>
+            분석 취소
+          </button>
+        )}
+      </div>
 
+      {s.status === "analyzing" && (
+        <p className="placeholder">분석을 진행하고 있습니다. 취소하려면 위 버튼을 누르세요.</p>
+      )}
+      {s.status === "cancelled" && <p className="placeholder">분석이 취소되었습니다.</p>}
       {s.status === "error" && <p className="error">⚠ {s.error}</p>}
     </section>
   );

@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld("sermoncut", {
   runEngine: (command, payload) =>
     ipcRenderer.invoke("engine:run", { command, payload }),
 
+  // 실행 중인 엔진 프로세스 취소
+  cancelEngine: () => ipcRenderer.invoke("engine:cancel"),
+
   // 엔진 진행률/로그 스트림 구독 (stdout JSON 라인)
   onEngineProgress: (handler) => {
     const listener = (_e, data) => handler(data);

@@ -4,6 +4,7 @@ export interface SermonCutBridge {
     command: "analyze" | "render" | "ping",
     payload?: Record<string, unknown>
   ) => Promise<T>;
+  cancelEngine: () => Promise<boolean>;
   onEngineProgress: (handler: (data: EngineProgress) => void) => () => void;
   readArtifact: <T = unknown>(name: string) => Promise<T>;
 }

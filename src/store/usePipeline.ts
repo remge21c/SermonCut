@@ -5,8 +5,18 @@ import {
   type Candidate,
 } from "../lib/selection";
 
-type Status = "idle" | "analyzing" | "ready" | "rendering" | "done" | "error";
+type Status =
+  | "idle"
+  | "analyzing"
+  | "ready"
+  | "rendering"
+  | "done"
+  | "cancelled"
+  | "error";
 type Crop = "left" | "center" | "right";
+
+const CANCELLED = "__CANCELLED__";
+const isCancel = (e: unknown) => String(e).includes(CANCELLED);
 
 interface CandidatesData {
   summary: string;
@@ -54,6 +64,7 @@ interface PipelineState {
   setCrop: (c: Crop) => void;
   analyze: () => Promise<void>;
   render: () => Promise<void>;
+  cancel: () => Promise<void>;
   reset: () => void;
 }
 
@@ -109,7 +120,8 @@ export const usePipeline = create<PipelineState>((set, get) => ({
         selected,
       });
     } catch (e) {
-      set({ status: "error", error: String(e) });
+      if (isCancel(e)) set({ status: "cancelled", error: null });
+      else set({ status: "error", error: String(e) });
     }
   },
 
@@ -131,9 +143,18 @@ export const usePipeline = create<PipelineState>((set, get) => ({
       );
       set({ status: "done", results: res.shorts });
     } catch (e) {
-      set({ status: "error", error: String(e) });
+      if (isCancel(e)) set({ status: "cancelled", error: null });
+      else set({ status: "error", error: String(e) });
     } finally {
       unsub?.();
+    }
+  },
+
+  cancel: async () => {
+    try {
+      await window.sermoncut.cancelEngine();
+    } catch {
+      // 취소 호출 자체 실패는 무시
     }
   },
 

@@ -22,6 +22,18 @@ export default function QuickResult() {
             </div>
           ))}
           {Object.keys(s.progress).length === 0 && <p>렌더 준비 중...</p>}
+          <button className="btn-cancel" onClick={() => s.cancel()}>
+            렌더 취소
+          </button>
+        </div>
+      )}
+
+      {s.status === "cancelled" && (
+        <div>
+          <p className="placeholder">렌더가 취소되었습니다.</p>
+          <button className="btn-primary" onClick={() => { s.reset(); nav("/"); }}>
+            처음으로
+          </button>
         </div>
       )}
 

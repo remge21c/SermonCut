@@ -6,12 +6,19 @@ const ROOT = path.join(__dirname, "..");
 const OUTPUT_DIR = path.join(ROOT, "output");
 const PYTHON = process.env.PYTHON_BIN || "python";
 
+// 실행 중인 엔진 프로세스를 sender(webContents.id) 기준으로 추적 → 취소 지원
+const running = new Map();
+
+const CANCELLED = "__CANCELLED__";
+
 // Python 엔진(sermoncut_core)을 자식 프로세스로 호출하고
 // stdout의 JSON 라인을 진행률 이벤트로 중계한다. (P0-T0.3)
-function runEngine(win, command, payload) {
+function runEngine(win, senderId, command, payload) {
   return new Promise((resolve, reject) => {
     const args = ["-m", "sermoncut_core.cli", command, "--json", JSON.stringify(payload || {})];
     const proc = spawn(PYTHON, args, { cwd: path.join(ROOT, "engine") });
+    proc._cancelled = false;
+    running.set(senderId, proc);
 
     let lastResult = null;
     let stderr = "";
@@ -32,11 +39,35 @@ function runEngine(win, command, payload) {
     proc.stderr.on("data", (buf) => (stderr += buf.toString()));
 
     proc.on("close", (code) => {
-      if (code === 0) resolve(lastResult);
-      else reject(new Error(`engine exited ${code}: ${stderr}`));
+      running.delete(senderId);
+      if (proc._cancelled) {
+        const err = new Error(CANCELLED);
+        err.cancelled = true;
+        reject(err);
+      } else if (code === 0) {
+        resolve(lastResult);
+      } else {
+        reject(new Error(`engine exited ${code}: ${stderr}`));
+      }
     });
-    proc.on("error", reject);
+    proc.on("error", (e) => {
+      running.delete(senderId);
+      reject(e);
+    });
   });
+}
+
+function cancelEngine(senderId) {
+  const proc = running.get(senderId);
+  if (!proc) return false;
+  proc._cancelled = true;
+  // Windows에서 프로세스 트리 종료
+  if (process.platform === "win32") {
+    spawn("taskkill", ["/pid", String(proc.pid), "/T", "/F"]);
+  } else {
+    proc.kill("SIGTERM");
+  }
+  return true;
 }
 
 function registerEngineHandlers(ipcMain) {
@@ -44,8 +75,10 @@ function registerEngineHandlers(ipcMain) {
 
   ipcMain.handle("engine:run", async (e, { command, payload }) => {
     const win = BrowserWindow.fromWebContents(e.sender);
-    return runEngine(win, command, payload);
+    return runEngine(win, e.sender.id, command, payload);
   });
+
+  ipcMain.handle("engine:cancel", async (e) => cancelEngine(e.sender.id));
 
   ipcMain.handle("artifact:read", async (_e, name) => {
     const file = path.join(OUTPUT_DIR, name);
@@ -54,4 +87,4 @@ function registerEngineHandlers(ipcMain) {
   });
 }
 
-module.exports = { registerEngineHandlers, runEngine };
+module.exports = { registerEngineHandlers, runEngine, CANCELLED };
