@@ -60,6 +60,7 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 }
 .project-item:hover { border-color: var(--accent); }
 .project-item-main { display: flex; align-items: center; gap: 10px; }
+.project-item-right { display: flex; align-items: center; gap: 8px; }
 
 /* 입력 */
 .tabs, .segmented { display: flex; gap: 8px; }

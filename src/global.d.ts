@@ -10,6 +10,7 @@ export interface SermonCutBridge {
   listProjects: () => Promise<ProjectInfo[]>;
   createProject: (name: string) => Promise<ProjectInfo>;
   loadProjectState: (dir: string) => Promise<ProjectState>;
+  deleteProject: (dir: string) => Promise<boolean>;
   pickVideo: () => Promise<string | null>;
   mediaUrl: (p: string) => Promise<string>;
   openPath: (p: string) => Promise<string>;

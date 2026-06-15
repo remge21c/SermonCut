@@ -115,6 +115,17 @@ function registerEngineHandlers(ipcMain) {
     return projects;
   });
 
+  // 프로젝트 삭제 (project/ 하위 경로만 허용)
+  ipcMain.handle("projects:delete", async (_e, dir) => {
+    const resolved = path.resolve(dir);
+    const root = path.resolve(PROJECTS_ROOT);
+    if (resolved === root || !resolved.startsWith(root + path.sep)) {
+      throw new Error("잘못된 프로젝트 경로");
+    }
+    await fs.rm(resolved, { recursive: true, force: true });
+    return true;
+  });
+
   // 프로젝트 저장 상태 로드 (재개용): candidates/results 산출물 읽기
   ipcMain.handle("project:state", async (_e, dir) => {
     const read = async (sub, name) => {

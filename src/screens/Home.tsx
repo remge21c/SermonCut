@@ -10,6 +10,14 @@ export default function Home() {
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [confirmDir, setConfirmDir] = useState<string | null>(null);
+
+  async function remove(p: ProjectInfo) {
+    await window.sermoncut.deleteProject(p.dir);
+    if (usePipeline.getState().projectDir === p.dir) setProject("", "");
+    setConfirmDir(null);
+    await refresh();
+  }
 
   async function refresh() {
     setProjects(await window.sermoncut.listProjects());
@@ -86,9 +94,25 @@ export default function Home() {
                   <span className="badge">새 프로젝트</span>
                 )}
               </div>
-              <span className="muted-note">
-                {p.created ? new Date(p.created).toLocaleString() : ""}
-              </span>
+              <div className="project-item-right" onClick={(e) => e.stopPropagation()}>
+                <span className="muted-note">
+                  {p.created ? new Date(p.created).toLocaleString() : ""}
+                </span>
+                {confirmDir === p.dir ? (
+                  <>
+                    <button className="btn-cancel btn-ghost--sm" onClick={() => remove(p)}>
+                      삭제 확인
+                    </button>
+                    <button className="btn-ghost btn-ghost--sm" onClick={() => setConfirmDir(null)}>
+                      취소
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn-ghost btn-ghost--sm" onClick={() => setConfirmDir(p.dir)}>
+                    🗑 삭제
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
