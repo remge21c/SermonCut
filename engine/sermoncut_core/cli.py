@@ -40,11 +40,21 @@ def cmd_analyze(payload: dict) -> dict:
     source = build_source(spec, video_downloader=_dl, persist=True)
 
     emit_progress("transcript", percent=30, message="자막 확보")
+
+    def _whisper(path):
+        # 전사 진행률(0~100)을 전체 30~60% 구간으로 매핑
+        return adapters.whisper_transcribe(
+            path,
+            progress_cb=lambda p: emit_progress(
+                "transcript", percent=round(30 + p * 0.3, 1), message=f"음성 전사 중 {int(p)}%"
+            ),
+        )
+
     transcript = acquire_transcript(
         source,
         method=method,
         subs_downloader=adapters.download_youtube_subs,
-        whisper_fn=adapters.whisper_transcribe,
+        whisper_fn=_whisper,
         import_text=payload.get("import_text"),
         persist=True,
     )
