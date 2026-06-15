@@ -98,13 +98,12 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 
 /* 가로 배열 후보 카드 */
 .candidate-row {
-  display: flex; gap: 14px; overflow-x: auto; padding: 6px 2px 14px;
-  scroll-snap-type: x mandatory;
+  display: flex; gap: 14px; padding: 6px 2px 14px; align-items: stretch;
 }
 .candidate-card-h {
-  flex: 0 0 auto; width: 230px; background: var(--panel);
+  flex: 1 1 0; min-width: 0; background: var(--panel);
   border: 1px solid #2c313b; border-radius: 12px; padding: 12px;
-  display: flex; flex-direction: column; gap: 6px; scroll-snap-align: start;
+  display: flex; flex-direction: column; gap: 6px;
 }
 .candidate-card-h .preview-video,
 .candidate-card-h .video-loading {
