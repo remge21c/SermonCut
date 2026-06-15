@@ -24,7 +24,8 @@
     "P3-S2-T1",
     "P3-S3-T1",
     "P3-S4-T1",
-    "P3-S5-T1"
+    "P3-S5-T1",
+    "P4-E2E"
   ],
   "in_progress": [],
   "failed": [],
@@ -33,11 +34,11 @@
     "P1": "done",
     "P2": "done",
     "P3": "done",
-    "P4": "pending"
+    "P4": "done"
   },
-  "tests": "engine 36 passed + frontend 8 passed; tsc/vite build OK",
+  "tests": "engine 38 passed (incl. 헤드리스 파이프라인 통합) + frontend 8 passed; tsc/vite build OK",
   "remaining": [
-    "P4-S*-V / P4-E2E (실제 Electron 실행 + 유튜브→분석→렌더 검증, Gemini 키 사용)"
+    "실사용 검증: 본인 PC에서 npm run dev 로 실제 설교 유튜브 영상으로 분석→렌더 확인 (선택)"
   ],
-  "notes": "P0~P3 완료, main 병합·푸시(42cdde7). 남은 작업: P4 E2E(인터랙티브 Electron + 실제 영상 필요)."
+  "notes": "전 Phase(P0~P4) 완료, main 병합·푸시. 헤드리스 통합테스트로 파이프라인 배선 검증 완료. 실제 GUI E2E는 사용자 PC에서 수동 확인 권장."
 }
