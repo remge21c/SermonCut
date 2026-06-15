@@ -6,7 +6,7 @@ AI 출력 "HH:MM:SS" → 초(float) 변환 후 저장 (resources.sermon_analysis
 from __future__ import annotations
 
 from .gemini_client import call_gemini
-from .io_utils import read_rule, write_json
+from .io_utils import candidates_dir, read_rule, write_json
 from .timecode import hms, to_seconds
 
 _TIME_KEYS = ("sermon_start", "sermon_end", "benediction_start", "benediction_end")
@@ -52,5 +52,5 @@ def analyze_sermon(
     analysis.setdefault("keywords", [])
 
     if persist:
-        write_json("sermon_analysis.json", analysis)
+        write_json(candidates_dir() / "sermon_analysis.json", analysis)
     return analysis

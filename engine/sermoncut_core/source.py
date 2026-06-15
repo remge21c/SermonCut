@@ -12,7 +12,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from .io_utils import write_json
+from .io_utils import candidates_dir, write_json
 
 
 def _youtube_info(url: str) -> dict:
@@ -79,5 +79,5 @@ def build_source(
         raise ValueError(f"알 수 없는 입력 type: {stype!r}")
 
     if persist:
-        write_json("source_info.json", source)
+        write_json(candidates_dir() / "source_info.json", source)
     return source

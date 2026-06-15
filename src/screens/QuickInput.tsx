@@ -6,6 +6,18 @@ import { ElapsedTimer } from "../components/ElapsedTimer";
 export default function QuickInput() {
   const nav = useNavigate();
   const s = usePipeline();
+
+  if (!s.projectDir) {
+    return (
+      <section className="screen">
+        <p className="placeholder">먼저 프로젝트를 선택하거나 새로 만드세요.</p>
+        <button className="btn-primary" onClick={() => nav("/")}>
+          프로젝트 선택
+        </button>
+      </section>
+    );
+  }
+
   const isYoutube = s.inputType === "youtube";
   const canRun =
     s.status !== "analyzing" && (isYoutube ? s.url.trim() : s.path.trim());

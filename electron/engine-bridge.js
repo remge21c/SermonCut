@@ -83,8 +83,52 @@ function resolveAbs(p) {
   return path.isAbsolute(p) ? p : path.join(ROOT, p);
 }
 
+const PROJECTS_ROOT = path.join(ROOT, "project");
+const PROJECT_SUBDIRS = ["config", "input", "candidates", "results", "output"];
+
 function registerEngineHandlers(ipcMain) {
   const { BrowserWindow, shell, dialog } = require("electron");
+
+  // 프로젝트 목록
+  ipcMain.handle("projects:list", async () => {
+    await fs.mkdir(PROJECTS_ROOT, { recursive: true });
+    const entries = await fs.readdir(PROJECTS_ROOT, { withFileTypes: true });
+    const projects = [];
+    for (const e of entries) {
+      if (!e.isDirectory()) continue;
+      let meta = {};
+      try {
+        meta = JSON.parse(
+          await fs.readFile(path.join(PROJECTS_ROOT, e.name, "config", "project.json"), "utf-8")
+        );
+      } catch {}
+      projects.push({
+        name: e.name,
+        dir: path.join(PROJECTS_ROOT, e.name),
+        created: meta.created || null,
+      });
+    }
+    projects.sort((a, b) => String(b.created).localeCompare(String(a.created)));
+    return projects;
+  });
+
+  // 프로젝트 생성
+  ipcMain.handle("projects:create", async (_e, name) => {
+    const safe = String(name || "").trim().replace(/[<>:"/\\|?*]/g, "_");
+    if (!safe) throw new Error("프로젝트 이름을 입력하세요");
+    const dir = path.join(PROJECTS_ROOT, safe);
+    if (fsSync.existsSync(dir)) throw new Error("이미 같은 이름의 프로젝트가 있습니다");
+    for (const sub of PROJECT_SUBDIRS) {
+      await fs.mkdir(path.join(dir, sub), { recursive: true });
+    }
+    const meta = { name: safe, created: new Date().toISOString() };
+    await fs.writeFile(
+      path.join(dir, "config", "project.json"),
+      JSON.stringify(meta, null, 2),
+      "utf-8"
+    );
+    return { name: safe, dir };
+  });
 
   // 네이티브 파일 선택 다이얼로그 (로컬 영상)
   ipcMain.handle("dialog:openVideo", async (e) => {

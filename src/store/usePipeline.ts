@@ -35,6 +35,10 @@ interface RenderResult {
 }
 
 interface PipelineState {
+  // 프로젝트
+  projectName: string;
+  projectDir: string;
+
   // 입력
   inputType: "youtube" | "local";
   url: string;
@@ -62,6 +66,7 @@ interface PipelineState {
   renderElapsedMs: number | null;
 
   // actions
+  setProject: (name: string, dir: string) => void;
   setInputType: (t: "youtube" | "local") => void;
   setUrl: (v: string) => void;
   setPath: (v: string) => void;
@@ -76,6 +81,9 @@ interface PipelineState {
 }
 
 export const usePipeline = create<PipelineState>((set, get) => ({
+  projectName: "",
+  projectDir: "",
+
   inputType: "youtube",
   url: "",
   path: "",
@@ -99,6 +107,8 @@ export const usePipeline = create<PipelineState>((set, get) => ({
   renderElapsedMs: null,
 
   // 탭 전환 시 자막 방식 기본값: 유튜브→자동, 로컬→Whisper(자막 없음)
+  setProject: (name, dir) => set({ projectName: name, projectDir: dir }),
+
   setInputType: (t) =>
     set({ inputType: t, captionMethod: t === "local" ? "whisper" : "auto" }),
   setUrl: (v) => set({ url: v }),
@@ -146,7 +156,11 @@ export const usePipeline = create<PipelineState>((set, get) => ({
         source: Record<string, unknown>;
         analysis: Record<string, unknown>;
         candidates: CandidatesData;
-      }>("analyze", { input, caption_method: captionMethod });
+      }>("analyze", {
+        project: get().projectDir,
+        input,
+        caption_method: captionMethod,
+      });
 
       const selected = defaultSelection(
         res.candidates.candidates,
@@ -187,7 +201,7 @@ export const usePipeline = create<PipelineState>((set, get) => ({
     try {
       const res = await window.sermoncut.runEngine<{ shorts: RenderResult[] }>(
         "render",
-        { selected: chosen, crop, source }
+        { project: get().projectDir, selected: chosen, crop, source }
       );
       set({ status: "done", results: res.shorts });
     } catch (e) {

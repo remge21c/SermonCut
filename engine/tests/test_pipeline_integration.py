@@ -59,12 +59,12 @@ def _fake_gemini(system_prompt, _user):
 
 
 @pytest.fixture
-def isolated_output(tmp_path, monkeypatch):
-    monkeypatch.setattr(io_utils, "OUTPUT_DIR", tmp_path / "output")
-    return tmp_path / "output"
+def project(tmp_path):
+    io_utils.set_project(tmp_path)
+    return tmp_path
 
 
-def test_analyze_pipeline_end_to_end(isolated_output, monkeypatch):
+def test_analyze_pipeline_end_to_end(project, monkeypatch):
     # 어댑터(자막) + Gemini patch
     monkeypatch.setattr(source_mod, "_youtube_info",
                         lambda url: {"title": "2026 주일 2부", "duration": 5400, "id": "abc"})
@@ -86,17 +86,18 @@ def test_analyze_pipeline_end_to_end(isolated_output, monkeypatch):
     assert len(result["candidates"]["candidates"]) == 5
     assert result["candidates"]["_issues"] == []
 
-    # 산출 파일 생성 확인
+    # 산출 파일은 candidates/ 하위에 생성
+    cand = project / "candidates"
     for name in ("source_info.json", "transcript.json",
                  "sermon_analysis.json", "shorts_candidates.json"):
-        assert (isolated_output / name).exists(), name
+        assert (cand / name).exists(), name
 
-    saved = json.loads((isolated_output / "sermon_analysis.json").read_text(encoding="utf-8"))
+    saved = json.loads((cand / "sermon_analysis.json").read_text(encoding="utf-8"))
     assert saved["part"] == "2부"
     assert saved["benediction_start"] is None
 
 
-def test_render_pipeline_end_to_end(isolated_output, monkeypatch):
+def test_render_pipeline_end_to_end(project, monkeypatch):
     # ffmpeg 실제 실행 대신 subprocess.run patch
     class _OK:
         returncode = 0
@@ -115,6 +116,7 @@ def test_render_pipeline_end_to_end(isolated_output, monkeypatch):
 
     assert len(result["shorts"]) == 3
     assert all(s["status"] == "done" for s in result["shorts"])
-    assert (isolated_output / "selected_shorts.json").exists()
-    # 클립 자막(SRT)도 생성
-    assert (isolated_output / "short_001.srt").exists()
+    # 결과 메타는 results/, MP4·SRT는 output/
+    assert (project / "results" / "selected_shorts.json").exists()
+    assert (project / "output" / "short_001.srt").exists()
+    assert result["shorts"][0]["output_path"].endswith("short_001.mp4")

@@ -49,6 +49,17 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 
 .placeholder { color: var(--muted); line-height: 1.6; }
 
+/* 프로젝트 */
+.project-badge { color: var(--muted); font-size: 13px; }
+.block-title { font-size: 14px; color: var(--muted); margin: 18px 0 8px; }
+.project-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.project-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--panel); border: 1px solid #2c313b; border-radius: 10px;
+  padding: 14px 16px; cursor: pointer; transition: border-color .15s;
+}
+.project-item:hover { border-color: var(--accent); }
+
 /* 입력 */
 .tabs, .segmented { display: flex; gap: 8px; }
 .tab, .seg {

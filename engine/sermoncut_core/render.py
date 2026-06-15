@@ -9,7 +9,7 @@ import os
 import shutil
 import subprocess
 
-from .io_utils import output_path, write_json
+from .io_utils import output_dir, results_dir, write_json
 from .timecode import hms
 
 RES_W, RES_H = 1080, 1920
@@ -85,7 +85,7 @@ def write_clip_srt(segments: list[dict], clip_start: float, name: str) -> str:
         rs = max(rs, 0)
         lines += [str(idx), f"{srt_ts(rs)} --> {srt_ts(re)}", seg["text"], ""]
         idx += 1
-    path = output_path(name)
+    path = output_dir() / name
     path.write_text("\n".join(lines), encoding="utf-8")
     return str(path)
 
@@ -100,7 +100,7 @@ def render_short(
 ) -> dict:
     """단일 쇼츠 렌더. job: shorts_render 스키마. 결과 status/progress 갱신."""
     ff = shutil.which(ffmpeg) or ffmpeg
-    out = output_path(job["output_path"].split("/")[-1])
+    out = output_dir() / (job["output_path"].split("/")[-1])
     cmd = build_ffmpeg_command(
         input_video, job["source_start"], job["source_end"], str(out),
         crop=job.get("crop", "center"),
@@ -116,8 +116,8 @@ def render_short(
         job["status"], job["progress"] = "done", 100
     else:
         job["status"], job["progress"] = "failed", 0
-    job["output_path"] = f"output/{out.name}"
+    job["output_path"] = str(out)   # 절대 경로(프로젝트 output/)
 
     if persist_name:
-        write_json(persist_name, job)
+        write_json(results_dir() / persist_name, job)
     return job

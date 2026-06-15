@@ -19,7 +19,7 @@ def cmd_ping(_payload: dict) -> dict:
 def cmd_analyze(payload: dict) -> dict:
     """입력 → source → transcript → sermon_analysis → shorts_candidate."""
     from . import adapters
-    from .io_utils import cache_dir
+    from .io_utils import input_dir
     from .source import build_source
     from .captions import acquire_transcript
     from .analysis import analyze_sermon
@@ -33,7 +33,7 @@ def cmd_analyze(payload: dict) -> dict:
     def _dl(url):
         emit_progress("download", percent=5, message="유튜브 영상 다운로드 중")
         return adapters.download_youtube_video(
-            url, str(cache_dir()),
+            url, str(input_dir()),
             progress_cb=lambda p: emit_progress("download", percent=p, message="영상 다운로드"),
         )
 
@@ -67,10 +67,10 @@ def cmd_analyze(payload: dict) -> dict:
 def cmd_render(payload: dict) -> dict:
     """선택된 후보 → 세로 9:16 렌더 (자막 번인)."""
     from .render import render_short, write_clip_srt
-    from .io_utils import read_json, write_json
+    from .io_utils import candidates_dir, read_json, results_dir, write_json
 
-    source = payload.get("source") or read_json("source_info.json")
-    transcript = payload.get("transcript") or read_json("transcript.json")
+    source = payload.get("source") or read_json(candidates_dir() / "source_info.json")
+    transcript = payload.get("transcript") or read_json(candidates_dir() / "transcript.json")
     selected = payload["selected"]           # 후보 dict 리스트(정확히 3개)
     crop = payload.get("crop", "center")
     input_video = source["video_path"]
@@ -96,7 +96,7 @@ def cmd_render(payload: dict) -> dict:
         }
         results.append(render_short(job, input_video))
 
-    write_json("selected_shorts.json", results)
+    write_json(results_dir() / "selected_shorts.json", results)
     emit_progress("done", percent=100)
     return {"shorts": results}
 
@@ -126,6 +126,12 @@ def main() -> None:
         payload = json.loads(args.json)
     except json.JSONDecodeError as e:
         fail(f"잘못된 --json 페이로드: {e}")
+
+    # 프로젝트 디렉터리 지정 (analyze/render 에 필요, ping 은 생략 가능)
+    project = payload.get("project")
+    if project:
+        from .io_utils import set_project
+        set_project(project)
 
     result = COMMANDS[args.command](payload)
     emit_result(result)
