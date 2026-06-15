@@ -42,12 +42,23 @@ export default function QuickInput() {
           onChange={(e) => s.setUrl(e.target.value)}
         />
       ) : (
-        <input
-          className="field"
-          placeholder="C:\\videos\\sermon.mp4"
-          value={s.path}
-          onChange={(e) => s.setPath(e.target.value)}
-        />
+        <div className="file-row">
+          <input
+            className="field"
+            placeholder="영상 파일을 선택하세요"
+            value={s.path}
+            onChange={(e) => s.setPath(e.target.value)}
+          />
+          <button
+            className="btn-ghost"
+            onClick={async () => {
+              const p = await window.sermoncut.pickVideo();
+              if (p) s.setPath(p);
+            }}
+          >
+            파일 선택…
+          </button>
+        </div>
       )}
 
       <fieldset className="radio-group">

@@ -84,7 +84,22 @@ function resolveAbs(p) {
 }
 
 function registerEngineHandlers(ipcMain) {
-  const { BrowserWindow, shell } = require("electron");
+  const { BrowserWindow, shell, dialog } = require("electron");
+
+  // 네이티브 파일 선택 다이얼로그 (로컬 영상)
+  ipcMain.handle("dialog:openVideo", async (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    const res = await dialog.showOpenDialog(win, {
+      title: "설교 영상 선택",
+      properties: ["openFile"],
+      filters: [
+        { name: "영상 파일", extensions: ["mp4", "mov", "mkv", "avi", "webm", "m4v"] },
+        { name: "모든 파일", extensions: ["*"] },
+      ],
+    });
+    if (res.canceled || res.filePaths.length === 0) return null;
+    return res.filePaths[0];
+  });
 
   ipcMain.handle("engine:run", async (e, { command, payload }) => {
     const win = BrowserWindow.fromWebContents(e.sender);

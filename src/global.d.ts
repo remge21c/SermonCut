@@ -7,6 +7,7 @@ export interface SermonCutBridge {
   cancelEngine: () => Promise<boolean>;
   onEngineProgress: (handler: (data: EngineProgress) => void) => () => void;
   readArtifact: <T = unknown>(name: string) => Promise<T>;
+  pickVideo: () => Promise<string | null>;
   mediaUrl: (p: string) => Promise<string>;
   openPath: (p: string) => Promise<string>;
   showInFolder: (p: string) => Promise<boolean>;
