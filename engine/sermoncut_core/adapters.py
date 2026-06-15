@@ -90,13 +90,29 @@ def download_youtube_video(url: str, dest_dir: str, progress_cb=None) -> str:
 
 
 def whisper_transcribe(video_path: str, model_size: str | None = None) -> list[dict]:
-    """faster-whisper 전사 → [{start,end,text}]."""
+    """faster-whisper 전사 → [{start,end,text}].
+
+    기본 CPU(int8) — GPU(CUDA) 라이브러리가 없어도 항상 동작.
+    WHISPER_DEVICE=cuda 로 GPU 사용 가능하며, 실패 시 CPU로 자동 폴백.
+    """
+    import os
     from faster_whisper import WhisperModel
 
     model_size = model_size or os.environ.get("WHISPER_MODEL", "base")
-    model = WhisperModel(model_size, device="auto", compute_type="int8")
-    segments, _info = model.transcribe(video_path, language="ko")
-    return [
-        {"start": round(s.start, 3), "end": round(s.end, 3), "text": s.text.strip()}
-        for s in segments
-    ]
+    device = os.environ.get("WHISPER_DEVICE", "cpu")
+    compute = os.environ.get("WHISPER_COMPUTE", "int8")
+
+    def _run(dev: str, ct: str) -> list[dict]:
+        model = WhisperModel(model_size, device=dev, compute_type=ct)
+        segments, _info = model.transcribe(video_path, language="ko")
+        return [
+            {"start": round(s.start, 3), "end": round(s.end, 3), "text": s.text.strip()}
+            for s in segments
+        ]
+
+    try:
+        return _run(device, compute)
+    except Exception:
+        if device != "cpu":
+            return _run("cpu", "int8")   # GPU 실패 → CPU 폴백
+        raise
