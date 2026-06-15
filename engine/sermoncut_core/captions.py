@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from .io_utils import write_json
+from .io_utils import candidates_dir, write_json
 
 _TS = re.compile(r"(\d{1,2}:)?\d{1,2}:\d{2}[.,]\d{1,3}")
 
@@ -112,5 +112,5 @@ def acquire_transcript(
         "segments": segments,
     }
     if persist:
-        write_json("transcript.json", transcript)
+        write_json(candidates_dir() / "transcript.json", transcript)
     return transcript

@@ -19,6 +19,9 @@ __pycache__/
 output/
 cache/
 
+# 프로젝트 데이터 (영상/산출물 — 사용자별)
+project/
+
 # OS / editor
 .DS_Store
 Thumbs.db

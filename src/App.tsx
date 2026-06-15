@@ -1,4 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { usePipeline } from "./store/usePipeline";
 
 const STEPS = [
   { path: "/quick/input", label: "입력" },
@@ -11,6 +12,7 @@ const STEPS = [
 export default function App() {
   const { pathname } = useLocation();
   const nav = useNavigate();
+  const projectName = usePipeline((s) => s.projectName);
   const showStepper = pathname.startsWith("/quick");
 
   return (
@@ -24,6 +26,7 @@ export default function App() {
         >
           SermonCut
         </h1>
+        {projectName && <span className="project-badge">📁 {projectName}</span>}
         {showStepper && (
           <nav className="stepper">
             {STEPS.map((s) => (

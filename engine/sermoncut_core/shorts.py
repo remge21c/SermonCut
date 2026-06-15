@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from .gemini_client import call_gemini
-from .io_utils import read_rule, write_json
+from .io_utils import candidates_dir, read_rule, write_json
 from .timecode import hms, to_seconds
 
 CANDIDATE_COUNT = 5
@@ -98,5 +98,5 @@ def generate_candidates(
     data["_issues"] = validate_candidates(data)
 
     if persist:
-        write_json("shorts_candidates.json", data)
+        write_json(candidates_dir() / "shorts_candidates.json", data)
     return data
